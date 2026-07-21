@@ -5,15 +5,15 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from backend.app.llm import LLMResponse
+    from backend.app.rag.retrieval import RetrievalResult
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-from backend.app.llm import GeminiClient, LLMConfig, LLMResponse  # noqa: E402
-from backend.app.rag.embeddings import E5Embedder  # noqa: E402
-from backend.app.rag.prompts import ContextProcessor, LegalPromptBuilder  # noqa: E402
-from backend.app.rag.retrieval import ChromaRetriever  # noqa: E402
 
 DEFAULT_QUESTION = "How do I file an FIR?"
 TOP_K = 5
@@ -49,8 +49,46 @@ def _display_optional(value: int | str | None) -> str:
     return "Unavailable" if value is None else str(value)
 
 
+def _resolve_document_name(result: RetrievalResult) -> str:
+    """Resolve a display name from the typed result and compatible metadata formats."""
+    candidates = (
+        result.document_name,
+        result.metadata.get("document_name"),
+        result.document.metadata.get("document_name"),
+        result.metadata.get("source_document"),
+        result.document.metadata.get("source_document"),
+    )
+    for candidate in candidates:
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+
+    relative_path = result.metadata.get("relative_path") or result.document.metadata.get(
+        "relative_path"
+    )
+    if isinstance(relative_path, str) and relative_path.strip():
+        return Path(relative_path).stem
+    return "Unknown"
+
+
+def _resolve_chunk_id(result: RetrievalResult) -> str:
+    """Resolve the stable chunk ID without assuming one metadata representation."""
+    candidates = (
+        result.chunk_id,
+        result.metadata.get("chunk_id"),
+        result.document.metadata.get("chunk_id"),
+    )
+    for candidate in candidates:
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+    return "Unavailable"
+
+
 def main() -> None:
     """Run the complete RAG pipeline."""
+    from backend.app.llm import GeminiClient, LLMConfig
+    from backend.app.rag.embeddings import E5Embedder
+    from backend.app.rag.prompts import ContextProcessor, LegalPromptBuilder
+    from backend.app.rag.retrieval import ChromaRetriever
 
     logging.basicConfig(
         level=logging.INFO,
@@ -93,15 +131,12 @@ def main() -> None:
     print("-" * 60)
 
     for index, chunk in enumerate(retrieved_results, start=1):
-        metadata = chunk.metadata
-
-        source = metadata.get("source_document", "Unknown")
-        score = getattr(chunk, "similarity_score", None)
-
-        if score is not None:
-            print(f"{index}. {source} ({score:.3f})")
-        else:
-            print(f"{index}. {source}")
+        document_name = _resolve_document_name(chunk)
+        print(f"{index}. {document_name} ({chunk.similarity_score:.3f})")
+        print(f"   Similarity Score : {chunk.similarity_score:.6f}")
+        print(f"   Chunk ID         : {_resolve_chunk_id(chunk)}")
+        print(f"   Chunk Length     : {len(chunk.document.page_content)} characters")
+        print("-" * 60)
 
     print("\nUnique Source Documents")
     print("-" * 60)

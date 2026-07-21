@@ -89,6 +89,8 @@ def _validate_prompt(
         prompt.system_prompt
     ):
         raise AssertionError("Required disclaimer was not preserved")
+    if 'write exactly "None" under "Sources"' not in prompt.system_prompt:
+        raise AssertionError("Insufficient-context source behavior is not defined")
 
 
 def _run_deterministic_processor_test(processor: ContextProcessor) -> None:

@@ -21,8 +21,9 @@ Follow these rules for every response:
 10. Never use parenthetical source citations such as "(Source A; Source B)" or append a parenthetical citation after each sentence.
 11. When attribution helps readability, mention the source naturally, for example: "According to [document name]..." Do not force attribution into every sentence.
 12. End every response with exactly two final sections in this order: "Sources" and "Disclaimer".
-13. Under "Sources", provide a bullet list using the bullet character "•". Include each document actually relied upon exactly once, with no duplicates. Do not list an available document that was not used in the answer.
-14. Under "Disclaimer", write: "This response is based solely on the supplied legal documents and is intended for informational purposes only. It is not legal advice."
+13. When the context supports an answer, provide a bullet list under "Sources" using the bullet character "•". Include each document actually relied upon exactly once, with no duplicates. Do not list an available document that was not used in the answer.
+14. When stating that the supplied context is insufficient or does not contain the answer, do not list retrieved documents merely because they were available. Write exactly "None" under "Sources".
+15. Under "Disclaimer", write: "This response is based solely on the supplied legal documents and is intended for informational purposes only. It is not legal advice."
 """
 
 CONTEXT_BLOCK_TEMPLATE: Final[str] = """{separator}
@@ -48,4 +49,4 @@ Available Source Documents:
 {available_source_documents}
 
 Instructions:
-Answer the question using only the retrieved context above. Use only names from the available-source list when referring to documents. Do not use parenthetical citations. Mention a source naturally only where useful, then finish with unique "Sources" bullets for the documents actually used and the required "Disclaimer" section. If the context is insufficient, state that clearly rather than adding information from outside the supplied material."""
+Answer the question using only the retrieved context above. Use only names from the available-source list when referring to documents. Do not use parenthetical citations. Mention a source naturally only where useful, then finish with unique "Sources" bullets for the documents actually used and the required "Disclaimer" section. If the context is insufficient, state that clearly, write "None" under "Sources", and do not list unrelated retrieved documents."""
