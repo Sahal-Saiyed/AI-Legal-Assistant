@@ -175,7 +175,11 @@ class RAGService:
         return RAGResponse(
             question=normalized_question,
             answer=llm_response.answer,
-            source_documents=prompt.source_documents,
+            source_documents=(
+                ()
+                if self._answer_declares_no_sources(llm_response.answer)
+                else prompt.source_documents
+            ),
             generation_time=llm_response.generation_time,
             model_name=llm_response.model_name,
             input_token_count=llm_response.input_token_count,
@@ -193,3 +197,21 @@ class RAGService:
         if not normalized:
             raise RAGValidationError("question cannot be empty")
         return normalized
+
+    @staticmethod
+    def _answer_declares_no_sources(answer: str) -> bool:
+        """Return whether the dedicated Sources section explicitly contains None."""
+        lines = [line.strip() for line in answer.splitlines()]
+        for index in range(len(lines) - 1, -1, -1):
+            heading = lines[index].lstrip("#").strip().strip("*_`")
+            heading = heading.removesuffix(":").strip()
+            if heading.casefold() != "sources":
+                continue
+
+            for value in lines[index + 1 :]:
+                if not value:
+                    continue
+                normalized_value = value.lstrip("-*•").strip().strip("*_`).").strip()
+                return normalized_value.casefold() == "none"
+            return False
+        return False
