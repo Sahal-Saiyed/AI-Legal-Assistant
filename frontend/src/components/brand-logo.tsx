@@ -8,8 +8,7 @@ const bundledLogos = import.meta.glob("/src/assets/logo.png", {
   import: "default",
   query: "?url",
 }) as Record<string, string>;
-const logoPath =
-  import.meta.env.VITE_LOGO_PATH ?? bundledLogos["/src/assets/logo.png"] ?? "/src/assets/logo.png";
+const logoPath = import.meta.env.VITE_LOGO_PATH ?? bundledLogos["/src/assets/logo.png"];
 
 interface BrandLogoProps {
   className?: string;
@@ -26,7 +25,7 @@ export function BrandLogo({ className }: BrandLogoProps) {
       )}
       aria-hidden="true"
     >
-      {!imageFailed ? (
+      {logoPath && !imageFailed ? (
         <img
           src={logoPath}
           alt=""

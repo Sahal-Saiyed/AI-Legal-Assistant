@@ -45,23 +45,23 @@ export function AssistantMessage({
           </div>
 
           {sources.length > 0 ? (
-          <section className="mt-6 border-t border-stone-100 pt-5" aria-label="Sources">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.13em] text-slate-500">
-                Sources
-              </h3>
-              {generationTime !== undefined ? (
-                <span className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
-                  <Clock3 className="size-3" /> {generationTime.toFixed(2)} sec
-                </span>
-              ) : null}
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {sources.map((source) => (
-                <SourceCard key={source.title} {...source} />
-              ))}
-            </div>
-          </section>
+            <section className="mt-6 border-t border-stone-100 pt-5" aria-label="Sources">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.13em] text-slate-500">
+                  Sources
+                </h3>
+                {generationTime !== undefined ? (
+                  <span className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                    <Clock3 className="size-3" /> {generationTime.toFixed(2)} sec
+                  </span>
+                ) : null}
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {sources.map((source) => (
+                  <SourceCard key={source.title} {...source} />
+                ))}
+              </div>
+            </section>
           ) : generationTime !== undefined ? (
             <div className="mt-5 flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
               <Clock3 className="size-3" /> Generated in {generationTime.toFixed(2)} sec

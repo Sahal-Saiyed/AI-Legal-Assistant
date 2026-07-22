@@ -56,7 +56,6 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           disabled={disabled}
           maxLength={4000}
           aria-describedby="legal-question-hint"
-          aria-keyshortcuts="Control+K Meta+K"
           className="max-h-32 min-h-10 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-1 py-2.5 text-sm leading-5 text-slate-700 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
           aria-label="Legal question"
         />
@@ -66,7 +65,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
       </div>
       <p id="legal-question-hint" className="mt-2.5 text-center text-[10px] leading-4 text-slate-400">
         JuriGPT provides legal information, not legal advice.
-        <span className="ml-1 hidden sm:inline">Enter to send | Shift + Enter for a new line | Ctrl/Command + K to focus</span>
+        <span className="ml-1 hidden sm:inline">Enter to send | Shift + Enter for a new line</span>
       </p>
     </form>
   );

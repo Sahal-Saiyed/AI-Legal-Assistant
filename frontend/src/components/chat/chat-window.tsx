@@ -1,4 +1,4 @@
-import { AlertCircle, BookOpenText, BriefcaseBusiness, MessageCircleQuestion, RotateCcw, Scale, ShieldCheck, Trash2, X } from "lucide-react";
+import { AlertCircle, BookOpenText, BriefcaseBusiness, MessageCircleQuestion, RotateCcw, Scale, ShieldCheck, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
@@ -53,7 +53,6 @@ function parseAnswer(answer: string) {
 interface ChatWindowProps {
   messages: ChatMessage[];
   onMessagesChange: (messages: ChatMessage[]) => void;
-  onClear: () => void;
 }
 
 interface ChatError {
@@ -61,7 +60,7 @@ interface ChatError {
   question: string;
 }
 
-export function ChatWindow({ messages, onMessagesChange, onClear }: ChatWindowProps) {
+export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<ChatError | null>(null);
   const activeRequest = useRef<AbortController | null>(null);
@@ -119,32 +118,25 @@ export function ChatWindow({ messages, onMessagesChange, onClear }: ChatWindowPr
 
   return (
     <Card
-      className="relative flex min-h-[calc(100dvh-116px)] min-w-0 flex-col overflow-hidden bg-[#fbfcf9] sm:min-h-[690px] lg:h-[calc(100dvh-132px)] lg:min-h-[620px]"
+      className="relative flex min-h-[calc(100dvh-92px)] min-w-0 flex-col overflow-hidden rounded-[24px] border border-white bg-white shadow-[0_18px_55px_-36px_rgba(15,55,50,0.25)] sm:min-h-[calc(100dvh-140px)] lg:h-full lg:min-h-0"
       aria-busy={isLoading}
     >
-      <div className="pointer-events-none absolute -left-24 -top-28 size-80 rounded-full bg-[#dff4ec]/65 blur-3xl" />
-      <header className="relative flex items-center justify-between border-b border-stone-100/90 px-5 py-4 sm:px-7">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-2xl bg-[#e5f5ef] text-[#18715f]">
-            <MessageCircleQuestion className="size-5" strokeWidth={1.8} />
+      <div className="pointer-events-none absolute left-1/3 top-0 h-24 w-1/2 rounded-full bg-teal-100/45 blur-3xl" />
+      <header className="relative flex min-h-[72px] items-center justify-between border-b border-stone-100 px-5 py-3 sm:px-7">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-teal-50 text-teal-700">
+            <MessageCircleQuestion className="size-4" strokeWidth={1.8} />
           </span>
           <div>
-            <h1 className="text-sm font-semibold tracking-[-0.01em] text-slate-900">Legal assistant</h1>
+            <h2 className="truncate text-sm font-semibold tracking-[-0.02em] text-slate-900">AI Legal Assistant</h2>
             <p className="flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="size-1.5 rounded-full bg-emerald-500" /> JuriGPT is ready
+              <span className="size-1.5 rounded-full bg-teal-500" /> JuriGPT is ready
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {messages.length > 0 ? (
-            <Button variant="ghost" size="sm" onClick={onClear} disabled={isLoading} className="gap-1.5 text-xs text-slate-500">
-              <Trash2 className="size-3.5" /> Clear chat
-            </Button>
-          ) : null}
-          <span className="hidden rounded-full bg-[#edf7f3] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#397767] sm:inline-flex">
-            Private session
-          </span>
-        </div>
+        <span className="hidden rounded-full bg-teal-50 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-700 sm:inline-flex">
+          Private session
+        </span>
       </header>
 
       <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 scroll-smooth sm:px-7 sm:py-7" aria-live="polite">
@@ -218,7 +210,7 @@ export function ChatWindow({ messages, onMessagesChange, onClear }: ChatWindowPr
         </AnimatePresence>
       </div>
 
-      <footer className="relative border-t border-stone-100/80 bg-[#fbfcf9]/90 p-4 backdrop-blur sm:px-6 sm:py-5">
+      <footer className="relative border-t border-stone-100/80 bg-white/95 p-4 backdrop-blur sm:px-6 sm:py-5">
         <AnimatePresence>
         {error ? (
           <motion.div

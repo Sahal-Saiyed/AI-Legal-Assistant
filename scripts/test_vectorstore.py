@@ -17,7 +17,7 @@ from backend.app.rag.embeddings import E5Embedder  # noqa: E402
 from backend.app.rag.loaders import KnowledgeBaseDocumentLoader  # noqa: E402
 from backend.app.rag.vectorstore import ChromaVectorStore  # noqa: E402
 
-TEST_COLLECTION_NAME = "legal_assistant_test"
+TEST_COLLECTION_NAME = "legal_assistant"
 
 
 def main() -> None:

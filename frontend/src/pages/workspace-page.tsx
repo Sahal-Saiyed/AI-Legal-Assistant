@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 
+import { AppSidebar } from "@/components/app-sidebar";
+import { AppHeader } from "@/components/app-header";
 import { ChatWindow } from "@/components/chat/chat-window";
 import type { ChatMessage } from "@/components/chat/types";
-import { RightSidebar } from "@/components/right-sidebar";
-import { TopNavigation } from "@/components/top-navigation";
 
 export function WorkspacePage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const questions = messages.filter((message) => message.role === "user");
 
   const clearChat = () => {
     setMessages([]);
+    setSearchQuery("");
     requestAnimationFrame(() =>
       document.querySelector<HTMLTextAreaElement>("#legal-question-input")?.focus(),
     );
@@ -28,7 +31,12 @@ export function WorkspacePage() {
       const modifier = event.metaKey || event.ctrlKey;
       if (modifier && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        document.querySelector<HTMLTextAreaElement>("#legal-question-input")?.focus();
+        const searchInput = document.querySelector<HTMLInputElement>("#history-search");
+        if (searchInput && searchInput.offsetParent !== null) {
+          searchInput.focus();
+        } else {
+          document.querySelector<HTMLTextAreaElement>("#legal-question-input")?.focus();
+        }
       }
       if (modifier && event.shiftKey && event.key.toLowerCase() === "n") {
         event.preventDefault();
@@ -43,17 +51,28 @@ export function WorkspacePage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-[radial-gradient(circle_at_85%_0%,rgba(45,212,191,0.2),transparent_28%),linear-gradient(135deg,#dce8e5_0%,#f3f5f1_48%,#d6e4e2_100%)] p-0 sm:p-4 lg:h-dvh lg:overflow-hidden">
       <a href="#workspace" className="skip-link">Skip to legal assistant</a>
-      <TopNavigation />
-      <main id="workspace" className="mx-auto grid max-w-[1480px] min-w-0 grid-cols-1 gap-4 px-3 pb-5 pt-4 sm:gap-5 sm:px-6 sm:pb-6 sm:pt-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <ChatWindow messages={messages} onMessagesChange={setMessages} onClear={clearChat} />
-        <RightSidebar
+      <div className="mx-auto flex min-h-dvh max-w-[1560px] overflow-hidden bg-[#102c2a] shadow-[0_35px_90px_-35px_rgba(15,44,42,0.45)] sm:min-h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:h-[calc(100dvh-2rem)] lg:min-h-0">
+        <AppSidebar
           questions={questions}
-          onSelect={scrollToQuestion}
+          searchQuery={searchQuery}
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
           onNewChat={clearChat}
+          onSelectQuestion={scrollToQuestion}
         />
-      </main>
+        <main id="workspace" className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#f5f8f7] sm:rounded-[28px]">
+          <AppHeader
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onOpenSidebar={() => setSidebarOpen(true)}
+          />
+          <div className="min-h-0 flex-1 p-2 sm:p-4 lg:p-5">
+            <ChatWindow messages={messages} onMessagesChange={setMessages} />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
