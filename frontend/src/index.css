@@ -46,8 +46,7 @@
 
   button:focus-visible,
   a:focus-visible,
-  summary:focus-visible,
-  textarea:focus-visible {
+  summary:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
@@ -69,9 +68,13 @@
     @apply fixed left-4 top-3 z-50 -translate-y-20 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-float transition-transform focus:translate-y-0;
   }
 
-  .sidebar-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(153, 246, 228, 0.2) transparent;
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
   }
 }
 

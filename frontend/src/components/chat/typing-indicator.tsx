@@ -1,12 +1,11 @@
 import { motion } from "framer-motion";
-import { Scale } from "lucide-react";
+
+import { BrandLogo } from "@/components/brand-logo";
 
 export function TypingIndicator() {
   return (
     <div className="flex items-center gap-3" role="status" aria-label="JuriGPT is preparing a response">
-      <span className="hidden size-9 shrink-0 place-items-center rounded-2xl bg-[#dff2ea] text-[#236f5f] sm:grid">
-        <Scale className="size-4" strokeWidth={1.8} />
-      </span>
+      <BrandLogo className="hidden size-9 rounded-2xl bg-[#dff2ea] shadow-none sm:grid" />
       <div className="w-full max-w-[430px] rounded-[24px] rounded-bl-lg bg-white px-5 py-4 shadow-sm">
         <div className="flex items-center gap-1.5">
           {[0, 1, 2].map((dot) => (

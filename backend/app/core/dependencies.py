@@ -4,10 +4,44 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from typing import Annotated
 
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from backend.app.core.auth_config import AuthConfig
+from backend.app.database.mongodb import MongoDatabase
+from backend.app.schemas.auth import AuthenticatedUser
+from backend.app.services.auth_service import AuthService, InvalidTokenError
 from backend.app.services import RAGService, RAGServiceConfigurationError
 
 logger = logging.getLogger(__name__)
+bearer_scheme = HTTPBearer()
+
+
+@lru_cache(maxsize=1)
+def get_mongo_database() -> MongoDatabase:
+    return MongoDatabase(AuthConfig.from_env())
+
+
+@lru_cache(maxsize=1)
+def get_auth_service() -> AuthService:
+    config = AuthConfig.from_env()
+    return AuthService(get_mongo_database().users, config)
+
+
+def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+) -> AuthenticatedUser:
+    try:
+        return auth_service.user_from_token(credentials.credentials)
+    except InvalidTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
 
 
 @lru_cache(maxsize=1)

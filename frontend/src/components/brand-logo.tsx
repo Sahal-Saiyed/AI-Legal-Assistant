@@ -1,4 +1,3 @@
-import { Scale } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -33,7 +32,7 @@ export function BrandLogo({ className }: BrandLogoProps) {
           onError={() => setImageFailed(true)}
         />
       ) : (
-        <Scale className="size-5" strokeWidth={1.8} />
+        <span className="text-xs font-bold tracking-[-0.04em]">JG</span>
       )}
     </span>
   );

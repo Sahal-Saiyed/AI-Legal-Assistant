@@ -18,3 +18,10 @@ export interface AssistantChatMessage {
 }
 
 export type ChatMessage = UserChatMessage | AssistantChatMessage;
+
+export interface Conversation {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  updatedAt: number;
+}

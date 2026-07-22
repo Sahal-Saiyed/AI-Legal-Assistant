@@ -38,3 +38,25 @@ Interactive OpenAPI documentation is available at:
 ```text
 http://127.0.0.1:8000/docs
 ```
+
+## Authentication and MongoDB Atlas
+
+Recommended Atlas names:
+
+- Project: `JuriGPT`
+- Cluster: `jurigpt-cluster`
+- Database: `jurigpt`
+- User collection: `users` (created automatically)
+- Database user: `jurigpt_app`
+
+Copy `.env.example` to `.env`, replace all placeholder secrets, add the Atlas
+connection string, and allow the backend machine's IP address in Atlas Network
+Access. Install the updated requirements before starting FastAPI:
+
+```powershell
+python -m pip install -r requirements.txt
+python -m uvicorn backend.app.main:app --reload
+```
+
+Place the application logo at `frontend/src/assets/logo.png`. The UI uses a
+legal-scale fallback icon when this file is absent.

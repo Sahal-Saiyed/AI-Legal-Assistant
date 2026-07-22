@@ -1,6 +1,7 @@
-import { Clock3, Scale, ShieldCheck } from "lucide-react";
+import { Clock3, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { MessageTimestamp } from "@/components/chat/message-timestamp";
 import { SourceCard } from "@/components/chat/source-card";
@@ -33,9 +34,7 @@ export function AssistantMessage({
       className="flex items-start gap-3"
       aria-label="JuriGPT response"
     >
-      <span className="mt-1 hidden size-9 shrink-0 place-items-center rounded-2xl bg-[#dff2ea] text-[#236f5f] shadow-sm sm:grid">
-        <Scale className="size-4" strokeWidth={1.8} />
-      </span>
+      <BrandLogo className="mt-1 hidden size-9 rounded-2xl bg-[#dff2ea] shadow-sm sm:grid" />
       <div className="min-w-0 flex-1">
         <MessageBubble variant="assistant">
           <div className="space-y-3.5">

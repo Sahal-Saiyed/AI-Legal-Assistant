@@ -1,9 +1,11 @@
-import { BookOpenText, ChevronRight, Clock3, FileText, LogOut, MessageSquareText, Plus, X } from "lucide-react";
+import { BookOpenText, FileText, LogOut, MessageSquareText, Plus, Search, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { BrandLogo } from "@/components/brand-logo";
-import type { UserChatMessage } from "@/components/chat/types";
+import type { Conversation } from "@/components/chat/types";
 import { Button } from "@/components/ui/button";
+import { ThemedScrollArea } from "@/components/ui/themed-scroll-area";
+import { cn } from "@/lib/utils";
 
 const resources = [
   "Consumer Protection Act",
@@ -13,25 +15,34 @@ const resources = [
 ];
 
 interface AppSidebarProps {
-  questions: UserChatMessage[];
+  conversations: Conversation[];
+  activeConversationId: string;
   searchQuery: string;
+  onSearchChange: (value: string) => void;
   open: boolean;
   onClose: () => void;
   onNewChat: () => void;
-  onSelectQuestion: (id: string) => void;
+  onSelectConversation: (id: string) => void;
+  onLogout: () => void;
 }
 
-function SidebarContent({ questions, searchQuery, onClose, onNewChat, onSelectQuestion }: AppSidebarProps) {
+function SidebarContent(props: AppSidebarProps) {
+  const { conversations, activeConversationId, searchQuery, onClose, onNewChat, onSelectConversation, onLogout } = props;
   const normalizedSearch = searchQuery.trim().toLowerCase();
-  const filteredQuestions = questions.filter((question) =>
-    question.content.toLowerCase().includes(normalizedSearch),
-  );
+  const filteredConversations = conversations.filter((conversation) => {
+    const searchableText = conversation.messages
+      .map((message) =>
+        message.role === "user" ? message.content : message.answer.join(" "),
+      )
+      .join(" ");
+    return `${conversation.title} ${searchableText}`.toLowerCase().includes(normalizedSearch);
+  });
   const startNewChat = () => {
     onNewChat();
     onClose();
   };
-  const selectQuestion = (id: string) => {
-    onSelectQuestion(id);
+  const selectConversation = (id: string) => {
+    onSelectConversation(id);
     onClose();
   };
 
@@ -58,10 +69,23 @@ function SidebarContent({ questions, searchQuery, onClose, onNewChat, onSelectQu
         </Button>
       </div>
 
-      <section className="mt-8 flex min-h-0 flex-1 flex-col" aria-labelledby="history-heading">
+      <label className="relative mt-7 block">
+        <span className="sr-only">Search messages in recent chats</span>
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-teal-100/40" />
+        <input
+          data-history-search
+          type="search"
+          value={searchQuery}
+          onChange={(event) => props.onSearchChange(event.target.value)}
+          placeholder="Search chats"
+          className="h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.05] pl-10 pr-3 text-xs text-white outline-none transition placeholder:text-teal-100/30 focus:border-teal-400/40 focus:bg-white/[0.08] focus:ring-2 focus:ring-teal-400/10"
+        />
+      </label>
+
+      <section className="mt-5 flex min-h-0 flex-1 flex-col" aria-labelledby="history-heading">
         <div className="flex items-center justify-between px-2">
           <h2 id="history-heading" className="flex items-center gap-2 text-xs font-semibold text-white/80">
-            <Clock3 className="size-4 text-teal-400" /> History
+            <MessageSquareText className="size-4 text-teal-400" /> Recents
           </h2>
           <button
             type="button"
@@ -74,9 +98,13 @@ function SidebarContent({ questions, searchQuery, onClose, onNewChat, onSelectQu
           </button>
         </div>
 
-        <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1 sidebar-scrollbar">
+        <ThemedScrollArea
+          className="mt-3 flex-1"
+          viewportClassName="space-y-1.5 pr-4"
+          variant="dark"
+        >
           <AnimatePresence initial={false}>
-            {filteredQuestions.length === 0 ? (
+            {filteredConversations.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -84,46 +112,53 @@ function SidebarContent({ questions, searchQuery, onClose, onNewChat, onSelectQu
               >
                 <MessageSquareText className="mx-auto size-5 text-teal-100/40" />
                 <p className="mt-2 text-xs font-medium text-white/60">
-                  {questions.length === 0 ? "No conversations yet" : "No matching questions"}
+                  {conversations.length === 0 ? "No conversations yet" : "No matching conversations"}
                 </p>
                 <p className="mt-1 text-[10px] leading-4 text-teal-100/40">
-                  {questions.length === 0 ? "Your conversations will appear here." : "Try another search term."}
+                  {conversations.length === 0 ? "Your conversations will appear here." : "Try another search term."}
                 </p>
               </motion.div>
             ) : (
-              [...filteredQuestions].reverse().map((question) => (
+              [...filteredConversations]
+                .sort((left, right) => right.updatedAt - left.updatedAt)
+                .map((conversation) => (
                 <motion.button
                   layout
                   initial={{ opacity: 0, x: -5 }}
                   animate={{ opacity: 1, x: 0 }}
-                  key={question.id}
+                  key={conversation.id}
                   type="button"
-                  onClick={() => selectQuestion(question.id)}
-                  title={question.content}
-                  className="group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:bg-white/[0.08]"
+                  onClick={() => selectConversation(conversation.id)}
+                  title={conversation.title}
+                  aria-current={conversation.id === activeConversationId ? "true" : undefined}
+                  className={cn(
+                    "group flex w-full items-center rounded-2xl px-3 py-3 text-left text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:bg-white/[0.08]",
+                    conversation.id === activeConversationId && "bg-white/[0.08] text-white",
+                  )}
                 >
-                  <Clock3 className="size-4 shrink-0 text-teal-300/70" strokeWidth={1.7} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-xs font-medium">{question.content}</span>
-                    <span className="mt-0.5 block text-[10px] text-teal-100/40">{question.timestamp}</span>
+                  <span className="block min-w-0 flex-1 truncate text-xs font-medium">
+                    {conversation.title}
                   </span>
-                  <ChevronRight className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
                 </motion.button>
               ))
             )}
           </AnimatePresence>
-        </div>
+        </ThemedScrollArea>
       </section>
 
-      <section className="relative mt-5 overflow-hidden rounded-[24px] border border-teal-200/20 bg-gradient-to-br from-teal-500 to-emerald-700 p-5 shadow-[0_20px_50px_-28px_rgba(20,184,166,0.8)]" aria-labelledby="resources-heading">
-        <div className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-white/10" />
-        <div className="pointer-events-none absolute -bottom-10 -left-6 size-20 rounded-full bg-white/10" />
-        <BookOpenText className="relative size-5 text-white" strokeWidth={1.8} />
-        <h2 id="resources-heading" className="relative mt-3 text-sm font-semibold">Resource Documents</h2>
-        <p className="relative mt-1 text-[10px] leading-4 text-teal-50/70">
+      <section className="relative mt-5 overflow-hidden rounded-[24px] border border-white/15 bg-gradient-to-br from-white/[0.14] to-teal-300/[0.07] p-5 shadow-[0_20px_55px_-30px_rgba(45,212,191,0.75)] backdrop-blur-xl" aria-labelledby="resources-heading">
+        <div className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-teal-300/15 blur-xl" />
+        <div className="pointer-events-none absolute -bottom-10 -left-6 size-20 rounded-full bg-white/[0.06]" />
+        <div className="relative flex items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-white/15 bg-white/10 text-teal-200 shadow-sm">
+            <BookOpenText className="size-4" strokeWidth={1.8} />
+          </span>
+          <h2 id="resources-heading" className="text-sm font-semibold">Resource Documents</h2>
+        </div>
+        <p className="relative mt-3 text-[10px] leading-4 text-teal-50/60">
           Trusted legal references used by JuriGPT.
         </p>
-        <div className="relative mt-3 space-y-1.5">
+        <div className="relative mt-3 space-y-1 rounded-2xl border border-white/[0.06] bg-slate-950/10 p-2.5">
           {resources.map((resource) => (
             <div key={resource} className="flex min-w-0 items-center gap-2 text-[10px] leading-4 text-teal-50/80">
               <FileText className="size-3 shrink-0" />
@@ -135,6 +170,7 @@ function SidebarContent({ questions, searchQuery, onClose, onNewChat, onSelectQu
 
       <button
         type="button"
+        onClick={onLogout}
         className="mt-4 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-xs text-teal-100/50 transition hover:bg-white/[0.06] hover:text-white"
         title="Log out"
       >

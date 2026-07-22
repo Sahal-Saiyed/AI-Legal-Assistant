@@ -57,3 +57,9 @@ tqdm>=4.67,<5.0
 # LLM Providers
 # =========================
 google-genai>=1.0,<3.0
+
+# Authentication and MongoDB Atlas
+pymongo[srv]>=4.11,<5.0
+pwdlib[argon2]>=0.2,<1.0
+PyJWT>=2.10,<3.0
+email-validator>=2.2,<3.0

@@ -6,7 +6,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from backend.app.core.dependencies import get_rag_service
+from backend.app.core.dependencies import get_current_user, get_rag_service
+from backend.app.schemas.auth import AuthenticatedUser
 from backend.app.schemas.ask import AskRequest, AskResponse
 from backend.app.services import RAGService
 
@@ -26,6 +27,7 @@ router = APIRouter(tags=["Legal Assistant"])
 def ask_question(
     request: AskRequest,
     rag_service: Annotated[RAGService, Depends(get_rag_service)],
+    _current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
 ) -> AskResponse:
     """Delegate one validated question to the application service."""
     response = rag_service.ask(request.question)

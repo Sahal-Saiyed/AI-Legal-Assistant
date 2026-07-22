@@ -1,14 +1,16 @@
-import { AlertCircle, BookOpenText, BriefcaseBusiness, MessageCircleQuestion, RotateCcw, Scale, ShieldCheck, X } from "lucide-react";
+import { AlertCircle, BookOpenText, BriefcaseBusiness, RotateCcw, ShieldCheck, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 import { AssistantMessage } from "@/components/chat/assistant-message";
+import { BrandLogo } from "@/components/brand-logo";
 import { ChatInput } from "@/components/chat/chat-input";
 import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { UserMessage } from "@/components/chat/user-message";
 import type { ChatMessage } from "@/components/chat/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ThemedScrollArea } from "@/components/ui/themed-scroll-area";
 import { askLegalQuestion, getFriendlyApiError } from "@/services/api";
 
 const suggestions = [
@@ -122,30 +124,15 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
       aria-busy={isLoading}
     >
       <div className="pointer-events-none absolute left-1/3 top-0 h-24 w-1/2 rounded-full bg-teal-100/45 blur-3xl" />
-      <header className="relative flex min-h-[72px] items-center justify-between border-b border-stone-100 px-5 py-3 sm:px-7">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-teal-50 text-teal-700">
-            <MessageCircleQuestion className="size-4" strokeWidth={1.8} />
-          </span>
-          <div>
-            <h2 className="truncate text-sm font-semibold tracking-[-0.02em] text-slate-900">AI Legal Assistant</h2>
-            <p className="flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="size-1.5 rounded-full bg-teal-500" /> JuriGPT is ready
-            </p>
-          </div>
-        </div>
-        <span className="hidden rounded-full bg-teal-50 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-700 sm:inline-flex">
-          Private session
-        </span>
-      </header>
-
-      <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 scroll-smooth sm:px-7 sm:py-7" aria-live="polite">
+      <ThemedScrollArea
+        className="flex-1"
+        viewportClassName="px-4 py-5 scroll-smooth sm:px-7 sm:py-6"
+        ariaLive="polite"
+      >
         <AnimatePresence mode="wait">
         {messages.length === 0 ? (
-          <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mx-auto flex min-h-[420px] max-w-3xl flex-col items-center justify-center py-8 text-center">
-            <span className="grid size-14 place-items-center rounded-3xl bg-[#dff2ea] text-[#236f5f] shadow-sm">
-              <Scale className="size-6" strokeWidth={1.7} />
-            </span>
+          <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mx-auto flex min-h-[360px] max-w-3xl flex-col items-center justify-center py-8 text-center">
+            <BrandLogo className="size-14 rounded-3xl bg-[#dff2ea] text-[#236f5f] shadow-sm" />
             <h2 className="mt-6 max-w-2xl text-balance text-3xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-4xl">
               Welcome to JuriGPT
             </h2>
@@ -208,7 +195,7 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
           </motion.div>
         )}
         </AnimatePresence>
-      </div>
+      </ThemedScrollArea>
 
       <footer className="relative border-t border-stone-100/80 bg-white/95 p-4 backdrop-blur sm:px-6 sm:py-5">
         <AnimatePresence>
@@ -217,10 +204,10 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 3 }}
-            className="mx-auto mb-3 flex max-w-3xl items-start gap-3 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs text-rose-700"
+            className="mx-auto mb-3 flex min-h-16 max-w-3xl items-center gap-3 rounded-2xl border border-rose-100 bg-rose-50 px-5 py-3 text-xs text-rose-700"
             role="alert"
           >
-            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+            <AlertCircle className="size-4 shrink-0" />
             <span className="min-w-0 flex-1 break-words leading-5">{error.message}</span>
             <Button
               type="button"
