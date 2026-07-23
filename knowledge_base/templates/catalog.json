@@ -1,0 +1,155 @@
+{
+  "templates": [
+    {
+      "id": "agreement_to_sell",
+      "title": "Agreement to Sell",
+      "source_file": "agreement_to_sell.template.md",
+      "aliases": ["agreement to sell", "agreement for sale", "sale agreement"],
+      "fields": [
+        {"key": "execution_date", "label": "date of execution"},
+        {"key": "execution_place", "label": "place of execution"},
+        {"key": "seller_name", "label": "seller's full name"},
+        {"key": "seller_address", "label": "seller's complete address"},
+        {"key": "buyer_name", "label": "buyer's full name"},
+        {"key": "buyer_address", "label": "buyer's complete address"},
+        {"key": "property_description", "label": "complete property description"},
+        {"key": "sale_price", "label": "total sale price"},
+        {"key": "advance_amount", "label": "advance amount paid"},
+        {"key": "completion_date", "label": "deadline for completing the sale"},
+        {"key": "jurisdiction", "label": "court jurisdiction"}
+      ]
+    },
+    {
+      "id": "exchange_deed",
+      "title": "Exchange Deed",
+      "source_file": "exchange_deed.template.md",
+      "aliases": ["exchange deed", "property exchange deed"],
+      "fields": [
+        {"key": "execution_date", "label": "date of execution"},
+        {"key": "execution_place", "label": "place of execution"},
+        {"key": "first_party_name", "label": "first party's full name"},
+        {"key": "first_party_address", "label": "first party's complete address"},
+        {"key": "first_property", "label": "first property description"},
+        {"key": "second_party_name", "label": "second party's full name"},
+        {"key": "second_party_address", "label": "second party's complete address"},
+        {"key": "second_property", "label": "second property description"},
+        {"key": "equalization_amount", "label": "equalization amount, or state none"},
+        {"key": "jurisdiction", "label": "court jurisdiction"}
+      ]
+    },
+    {
+      "id": "gift_deed",
+      "title": "Gift Deed",
+      "source_file": "gift_deed.template.md",
+      "aliases": ["gift deed", "deed of gift"],
+      "fields": [
+        {"key": "execution_date", "label": "date of execution"},
+        {"key": "execution_place", "label": "place of execution"},
+        {"key": "donor_name", "label": "donor's full name"},
+        {"key": "donor_address", "label": "donor's complete address"},
+        {"key": "donee_name", "label": "donee's full name"},
+        {"key": "donee_address", "label": "donee's complete address"},
+        {"key": "relationship", "label": "relationship between donor and donee"},
+        {"key": "property_description", "label": "complete gifted property description"},
+        {"key": "title_details", "label": "donor's title or ownership details"},
+        {"key": "jurisdiction", "label": "court jurisdiction"}
+      ]
+    },
+    {
+      "id": "lease_deed",
+      "title": "Lease Deed",
+      "source_file": "lease_deed.template.md",
+      "aliases": ["lease deed", "rent agreement", "rental agreement", "tenancy agreement"],
+      "fields": [
+        {"key": "execution_date", "label": "date of execution"},
+        {"key": "execution_place", "label": "place of execution"},
+        {"key": "lessor_name", "label": "landlord or lessor's full name"},
+        {"key": "lessor_address", "label": "landlord or lessor's complete address"},
+        {"key": "lessee_name", "label": "tenant or lessee's full name"},
+        {"key": "lessee_address", "label": "tenant or lessee's complete address"},
+        {"key": "property_description", "label": "complete leased property description"},
+        {"key": "lease_start", "label": "lease start date"},
+        {"key": "lease_end", "label": "lease end date"},
+        {"key": "monthly_rent", "label": "monthly rent amount"},
+        {"key": "security_deposit", "label": "security deposit amount"},
+        {"key": "rent_due_day", "label": "monthly rent due day"},
+        {"key": "permitted_use", "label": "permitted use of the property"},
+        {"key": "jurisdiction", "label": "court jurisdiction"}
+      ]
+    },
+    {
+      "id": "power_of_attorney",
+      "title": "Power of Attorney",
+      "source_file": "power_of_attorney.template.md",
+      "aliases": ["power of attorney", "general power of attorney", "special power of attorney", "poa"],
+      "fields": [
+        {"key": "execution_date", "label": "date of execution"},
+        {"key": "execution_place", "label": "place of execution"},
+        {"key": "principal_name", "label": "principal's full name"},
+        {"key": "principal_address", "label": "principal's complete address"},
+        {"key": "attorney_name", "label": "attorney's full name"},
+        {"key": "attorney_address", "label": "attorney's complete address"},
+        {"key": "authorized_powers", "label": "specific powers being granted"},
+        {"key": "property_description", "label": "property description, if applicable"},
+        {"key": "jurisdiction", "label": "court jurisdiction"}
+      ]
+    },
+    {
+      "id": "sale_deed",
+      "title": "Sale Deed",
+      "source_file": "sale_deed.template.md",
+      "aliases": ["sale deed", "property sale deed", "conveyance deed"],
+      "fields": [
+        {"key": "execution_date", "label": "date of execution"},
+        {"key": "execution_place", "label": "place of execution"},
+        {"key": "vendor_name", "label": "vendor or seller's full name"},
+        {"key": "vendor_address", "label": "vendor or seller's complete address"},
+        {"key": "vendee_name", "label": "vendee or buyer's full name"},
+        {"key": "vendee_address", "label": "vendee or buyer's complete address"},
+        {"key": "property_description", "label": "complete property description"},
+        {"key": "title_details", "label": "vendor's title or ownership details"},
+        {"key": "sale_consideration", "label": "sale consideration amount"},
+        {"key": "possession_date", "label": "date possession will be delivered"},
+        {"key": "jurisdiction", "label": "court jurisdiction"}
+      ]
+    },
+    {
+      "id": "simple_mortgage_deed",
+      "title": "Simple Mortgage Deed",
+      "source_file": "simple_mortgage_deed.template.md",
+      "aliases": ["simple mortgage deed", "mortgage deed", "property mortgage"],
+      "fields": [
+        {"key": "execution_date", "label": "date of execution"},
+        {"key": "execution_place", "label": "place of execution"},
+        {"key": "mortgagor_name", "label": "mortgagor's full name"},
+        {"key": "mortgagor_address", "label": "mortgagor's complete address"},
+        {"key": "mortgagee_name", "label": "mortgagee's full name"},
+        {"key": "mortgagee_address", "label": "mortgagee's complete address"},
+        {"key": "property_description", "label": "complete mortgaged property description"},
+        {"key": "principal_amount", "label": "principal loan amount"},
+        {"key": "interest_rate", "label": "interest rate"},
+        {"key": "repayment_date", "label": "repayment due date"},
+        {"key": "jurisdiction", "label": "court jurisdiction"}
+      ]
+    },
+    {
+      "id": "will",
+      "title": "Will",
+      "source_file": "will.template.md",
+      "aliases": ["will", "last will and testament", "testament"],
+      "fields": [
+        {"key": "execution_date", "label": "date of execution"},
+        {"key": "execution_place", "label": "place of execution"},
+        {"key": "testator_name", "label": "testator's full name"},
+        {"key": "testator_age", "label": "testator's age"},
+        {"key": "testator_address", "label": "testator's complete address"},
+        {"key": "legal_heirs", "label": "names and relationships of legal heirs"},
+        {"key": "assets", "label": "complete list of assets"},
+        {"key": "bequests", "label": "who should receive each asset"},
+        {"key": "executor_name", "label": "executor's full name"},
+        {"key": "witness_one", "label": "first witness's name and address"},
+        {"key": "witness_two", "label": "second witness's name and address"}
+      ]
+    }
+  ]
+}

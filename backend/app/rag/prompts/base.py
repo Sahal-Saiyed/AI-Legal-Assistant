@@ -41,5 +41,6 @@ class PromptBuilder(ABC):
         self,
         question: str,
         processed_context: ContextProcessingResult,
+        language: str = "English",
     ) -> LegalPrompt:
         """Return one structured prompt without invoking a language model."""

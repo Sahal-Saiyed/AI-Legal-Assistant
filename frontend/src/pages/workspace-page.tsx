@@ -1,10 +1,18 @@
-import { useEffect, useState } from "react";
+import { AlertCircle, LoaderCircle, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { useAuth } from "@/auth/auth-context";
-import { AppSidebar } from "@/components/app-sidebar";
+import { useAuth } from "@/auth/auth-state";
 import { AppHeader } from "@/components/app-header";
+import { AppSidebar } from "@/components/app-sidebar";
 import { ChatWindow } from "@/components/chat/chat-window";
 import type { ChatMessage, Conversation } from "@/components/chat/types";
+import {
+  deletePersistedConversation,
+  getConversationApiError,
+  getConversations,
+  renamePersistedConversation,
+  saveConversation,
+} from "@/services/api";
 
 function createConversation(): Conversation {
   return {
@@ -15,28 +23,65 @@ function createConversation(): Conversation {
   };
 }
 
+function createConversationTitle(question: string) {
+  const normalized = question.replace(/\s+/g, " ").trim();
+  if (normalized.length <= 44) return normalized;
+  const shortened = normalized.slice(0, 44);
+  const lastSpace = shortened.lastIndexOf(" ");
+  return `${shortened.slice(0, lastSpace > 28 ? lastSpace : 44).trim()}...`;
+}
+
 export function WorkspacePage() {
   const { user, logout } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>(() => [createConversation()]);
   const [activeConversationId, setActiveConversationId] = useState(() => conversations[0].id);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [persistenceError, setPersistenceError] = useState<string | null>(null);
+  const persistenceQueues = useRef(new Map<string, Promise<void>>());
   const activeConversation =
-    conversations.find((conversation) => conversation.id === activeConversationId) ?? conversations[0];
+    conversations.find((conversation) => conversation.id === activeConversationId) ??
+    conversations[0];
+  const visibleConversations = useMemo(
+    () => conversations.filter((conversation) => conversation.messages.length > 0),
+    [conversations],
+  );
+
+  const enqueuePersistence = (conversationId: string, operation: () => Promise<unknown>) => {
+    const previous = persistenceQueues.current.get(conversationId) ?? Promise.resolve();
+    const next = previous
+      .catch(() => undefined)
+      .then(operation)
+      .then(() => setPersistenceError(null))
+      .catch((error: unknown) => setPersistenceError(getConversationApiError(error)));
+    persistenceQueues.current.set(conversationId, next);
+    void next.finally(() => {
+      if (persistenceQueues.current.get(conversationId) === next) {
+        persistenceQueues.current.delete(conversationId);
+      }
+    });
+  };
 
   const updateMessages = (messages: ChatMessage[]) => {
+    const firstQuestion = messages.find((message) => message.role === "user");
+    const updatedConversation: Conversation = {
+      ...activeConversation,
+      messages,
+      title:
+        !activeConversation.titleCustomized && firstQuestion?.role === "user"
+          ? createConversationTitle(firstQuestion.content)
+          : activeConversation.title,
+      updatedAt: Date.now(),
+    };
     setConversations((current) =>
-      current.map((conversation) => {
-        if (conversation.id !== activeConversationId) return conversation;
-        const firstQuestion = messages.find((message) => message.role === "user");
-        return {
-          ...conversation,
-          messages,
-          title: firstQuestion?.role === "user" ? firstQuestion.content : "New conversation",
-          updatedAt: Date.now(),
-        };
-      }),
+      current.map((conversation) =>
+        conversation.id === activeConversationId ? updatedConversation : conversation,
+      ),
     );
+    if (messages.length > 0) {
+      enqueuePersistence(updatedConversation.id, () => saveConversation(updatedConversation));
+    }
   };
 
   const startNewChat = () => {
@@ -59,6 +104,61 @@ export function WorkspacePage() {
     setSidebarOpen(false);
   };
 
+  const renameConversation = (conversationId: string, title: string) => {
+    const normalizedTitle = title.replace(/\s+/g, " ").trim();
+    if (!normalizedTitle) return;
+    const conversation = conversations.find((item) => item.id === conversationId);
+    if (!conversation) return;
+    setConversations((current) =>
+      current.map((item) =>
+        item.id === conversationId
+          ? { ...item, title: normalizedTitle, titleCustomized: true }
+          : item,
+      ),
+    );
+    enqueuePersistence(conversationId, () =>
+      renamePersistedConversation(conversationId, normalizedTitle),
+    );
+  };
+
+  const deleteConversation = (conversationId: string) => {
+    enqueuePersistence(conversationId, () => deletePersistedConversation(conversationId));
+    const remaining = conversations.filter((conversation) => conversation.id !== conversationId);
+    if (remaining.length === 0) {
+      const replacement = createConversation();
+      setActiveConversationId(replacement.id);
+      setConversations([replacement]);
+      return;
+    }
+    setConversations(remaining);
+    if (conversationId === activeConversationId) {
+      setActiveConversationId(remaining[0].id);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    setLoadingConversations(true);
+    void getConversations()
+      .then((savedConversations) => {
+        if (cancelled) return;
+        const loaded = savedConversations.length > 0 ? savedConversations : [createConversation()];
+        setConversations(loaded);
+        setActiveConversationId(loaded[0].id);
+        setPersistenceError(null);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setPersistenceError(getConversationApiError(error));
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingConversations(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       const modifier = event.metaKey || event.ctrlKey;
@@ -67,7 +167,7 @@ export function WorkspacePage() {
         const searchInput = Array.from(
           document.querySelectorAll<HTMLInputElement>("[data-history-search]"),
         ).find((input) => input.offsetParent !== null);
-        if (searchInput && searchInput.offsetParent !== null) {
+        if (searchInput) {
           searchInput.focus();
         } else {
           document.querySelector<HTMLTextAreaElement>("#legal-question-input")?.focus();
@@ -76,9 +176,6 @@ export function WorkspacePage() {
       if (modifier && event.shiftKey && event.key.toLowerCase() === "n") {
         event.preventDefault();
         startNewChat();
-        requestAnimationFrame(() =>
-          document.querySelector<HTMLTextAreaElement>("#legal-question-input")?.focus(),
-        );
       }
     };
     window.addEventListener("keydown", handleShortcut);
@@ -87,10 +184,12 @@ export function WorkspacePage() {
 
   return (
     <div className="min-h-dvh bg-[radial-gradient(circle_at_85%_0%,rgba(45,212,191,0.2),transparent_28%),linear-gradient(135deg,#dce8e5_0%,#f3f5f1_48%,#d6e4e2_100%)] p-0 sm:p-4 lg:h-dvh lg:overflow-hidden">
-      <a href="#workspace" className="skip-link">Skip to legal assistant</a>
+      <a href="#workspace" className="skip-link">
+        Skip to legal assistant
+      </a>
       <div className="mx-auto flex min-h-dvh max-w-[1560px] overflow-hidden bg-[#102c2a] shadow-[0_35px_90px_-35px_rgba(15,44,42,0.45)] sm:min-h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:h-[calc(100dvh-2rem)] lg:min-h-0">
         <AppSidebar
-          conversations={conversations.filter((conversation) => conversation.messages.length > 0)}
+          conversations={visibleConversations}
           activeConversationId={activeConversationId}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -98,19 +197,49 @@ export function WorkspacePage() {
           onClose={() => setSidebarOpen(false)}
           onNewChat={startNewChat}
           onSelectConversation={selectConversation}
+          onRenameConversation={renameConversation}
+          onDeleteConversation={deleteConversation}
           onLogout={logout}
         />
-        <main id="workspace" className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#f5f8f7] sm:rounded-[28px]">
+        <main
+          id="workspace"
+          className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#f5f8f7] sm:rounded-[28px]"
+        >
           <AppHeader
             onOpenSidebar={() => setSidebarOpen(true)}
             userName={user?.name ?? "Profile"}
           />
           <div className="min-h-0 flex-1 p-2 sm:p-4 lg:p-5">
-            <ChatWindow
-              key={activeConversation.id}
-              messages={activeConversation.messages}
-              onMessagesChange={updateMessages}
-            />
+            <div className="relative h-full">
+              {persistenceError ? (
+                <div className="absolute left-1/2 top-3 z-30 flex w-[min(92%,620px)] -translate-x-1/2 items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/95 px-4 py-3 text-xs text-amber-800 shadow-lg backdrop-blur">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <span className="min-w-0 flex-1">{persistenceError}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPersistenceError(null)}
+                    className="grid size-7 place-items-center rounded-lg hover:bg-amber-100"
+                    aria-label="Dismiss synchronization error"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ) : null}
+              {loadingConversations ? (
+                <div className="grid h-full min-h-[400px] place-items-center rounded-[24px] bg-white">
+                  <div className="flex items-center gap-3 text-sm text-slate-500">
+                    <LoaderCircle className="size-5 animate-spin text-teal-700" />
+                    Loading your conversations
+                  </div>
+                </div>
+              ) : (
+                <ChatWindow
+                  key={activeConversation.id}
+                  messages={activeConversation.messages}
+                  onMessagesChange={updateMessages}
+                />
+              )}
+            </div>
           </div>
         </main>
       </div>

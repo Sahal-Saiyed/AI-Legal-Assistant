@@ -13,6 +13,8 @@ from backend.app.core.auth_config import AuthConfig
 from backend.app.database.mongodb import MongoDatabase
 from backend.app.schemas.auth import AuthenticatedUser
 from backend.app.services.auth_service import AuthService, InvalidTokenError
+from backend.app.services.conversation_service import ConversationService
+from backend.app.services.document_generation_service import DocumentGenerationService
 from backend.app.services import RAGService, RAGServiceConfigurationError
 
 logger = logging.getLogger(__name__)
@@ -28,6 +30,16 @@ def get_mongo_database() -> MongoDatabase:
 def get_auth_service() -> AuthService:
     config = AuthConfig.from_env()
     return AuthService(get_mongo_database().users, config)
+
+
+@lru_cache(maxsize=1)
+def get_conversation_service() -> ConversationService:
+    return ConversationService(get_mongo_database().conversations)
+
+
+@lru_cache(maxsize=1)
+def get_document_generation_service() -> DocumentGenerationService:
+    return DocumentGenerationService(get_mongo_database().generated_documents)
 
 
 def get_current_user(

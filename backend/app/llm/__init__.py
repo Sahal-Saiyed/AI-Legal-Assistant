@@ -1,6 +1,6 @@
 """Provider-independent public interface for language-model generation."""
 
-from .base import BaseLLM, GenerationParameters, LLMResponse
+from .base import BaseLLM, GenerationParameters, LLMResponse, LLMStreamEvent
 from .config import DEFAULT_ENV_FILE, LLMConfig
 from .exceptions import (
     LLMAuthenticationError,
@@ -24,5 +24,6 @@ __all__ = [
     "LLMGenerationError",
     "LLMRateLimitError",
     "LLMResponse",
+    "LLMStreamEvent",
     "LLMTimeoutError",
 ]

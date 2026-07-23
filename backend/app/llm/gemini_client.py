@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from time import perf_counter
 from typing import Any
 
@@ -10,7 +11,7 @@ import httpx
 from google import genai
 from google.genai import errors, types
 
-from .base import BaseLLM, GenerationParameters, LLMResponse
+from .base import BaseLLM, GenerationParameters, LLMResponse, LLMStreamEvent
 from .config import LLMConfig
 from .exceptions import (
     LLMAuthenticationError,
@@ -110,6 +111,87 @@ class GeminiClient(BaseLLM):
             llm_response.output_token_count,
         )
         return llm_response
+
+    def stream_generate(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        parameters: GenerationParameters | None = None,
+    ) -> Iterator[LLMStreamEvent]:
+        """Stream normalized Gemini text deltas and finish with response metadata."""
+        self._ensure_open()
+        normalized_system, normalized_user = self.validate_prompts(
+            system_prompt,
+            user_prompt,
+        )
+        effective_parameters = parameters or self._config.generation_parameters
+        if not isinstance(effective_parameters, GenerationParameters):
+            raise TypeError("parameters must be GenerationParameters or None")
+
+        started_at = perf_counter()
+        answer_parts: list[str] = []
+        final_chunk: types.GenerateContentResponse | None = None
+        logger.info(
+            "Starting streamed Gemini generation | model=%s | prompt_size=%d",
+            self.model_name,
+            len(normalized_system) + len(normalized_user),
+        )
+        try:
+            response_stream = self._client.models.generate_content_stream(
+                model=self.model_name,
+                contents=normalized_user,
+                config=types.GenerateContentConfig(
+                    system_instruction=normalized_system,
+                    temperature=float(effective_parameters.temperature),
+                    max_output_tokens=effective_parameters.max_output_tokens,
+                    http_options=types.HttpOptions(
+                        timeout=self._timeout_milliseconds(
+                            effective_parameters.timeout_seconds
+                        )
+                    ),
+                ),
+            )
+            for chunk in response_stream:
+                final_chunk = chunk
+                text = chunk.text
+                if isinstance(text, str) and text:
+                    answer_parts.append(text)
+                    yield LLMStreamEvent(text_delta=text)
+        except (LLMGenerationError, LLMAuthenticationError, LLMRateLimitError, LLMTimeoutError):
+            raise
+        except errors.APIError as exc:
+            self._raise_api_error(exc)
+        except (httpx.TimeoutException, TimeoutError) as exc:
+            logger.error("Streamed Gemini generation timed out | model=%s", self.model_name)
+            raise LLMTimeoutError("Gemini generation timed out") from exc
+        except Exception as exc:
+            logger.exception("Streamed Gemini generation failed | model=%s", self.model_name)
+            raise LLMGenerationError("Gemini generation failed") from exc
+
+        answer = "".join(answer_parts).strip()
+        if not answer:
+            raise LLMGenerationError("Gemini returned an empty streamed response")
+        generation_time = perf_counter() - started_at
+        usage = final_chunk.usage_metadata if final_chunk else None
+        response = LLMResponse(
+            answer=answer,
+            model_name=self.model_name,
+            input_token_count=self._optional_non_negative_integer(
+                getattr(usage, "prompt_token_count", None) if usage else None
+            ),
+            output_token_count=self._optional_non_negative_integer(
+                getattr(usage, "candidates_token_count", None) if usage else None
+            ),
+            finish_reason=self._finish_reason(final_chunk) if final_chunk else None,
+            generation_time=generation_time,
+        )
+        logger.info(
+            "Completed streamed Gemini generation | model=%s | duration=%.3fs | response_size=%d",
+            self.model_name,
+            generation_time,
+            len(answer),
+        )
+        yield LLMStreamEvent(response=response)
 
     def health_check(self) -> bool:
         """Check authentication, connectivity, and configured-model availability."""

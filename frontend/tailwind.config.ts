@@ -17,18 +17,18 @@ export default {
         muted: "hsl(var(--muted))",
         "muted-foreground": "hsl(var(--muted-foreground))",
         border: "hsl(var(--border))",
-        ring: "hsl(var(--ring))"
+        ring: "hsl(var(--ring))",
       },
       borderRadius: {
         xl: "calc(var(--radius) - 4px)",
         "2xl": "var(--radius)",
-        "3xl": "calc(var(--radius) + 8px)"
+        "3xl": "calc(var(--radius) + 8px)",
       },
       boxShadow: {
         soft: "0 22px 65px -34px rgba(28, 52, 47, 0.28)",
-        float: "0 16px 45px -28px rgba(30, 65, 58, 0.34)"
-      }
-    }
+        float: "0 16px 45px -28px rgba(30, 65, 58, 0.34)",
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 } satisfies Config;

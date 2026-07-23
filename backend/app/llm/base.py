@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 from .exceptions import LLMConfigurationError
@@ -50,6 +51,14 @@ class LLMResponse:
     generation_time: float
 
 
+@dataclass(frozen=True, slots=True)
+class LLMStreamEvent:
+    """One provider-neutral streaming delta or final response."""
+
+    text_delta: str = ""
+    response: LLMResponse | None = None
+
+
 class BaseLLM(ABC):
     """Provider-neutral synchronous language-model interface."""
 
@@ -61,6 +70,17 @@ class BaseLLM(ABC):
         parameters: GenerationParameters | None = None,
     ) -> LLMResponse:
         """Generate one response from independent system and user prompts."""
+
+    def stream_generate(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        parameters: GenerationParameters | None = None,
+    ) -> Iterator[LLMStreamEvent]:
+        """Stream generation with a safe single-chunk fallback for providers."""
+        response = self.generate(system_prompt, user_prompt, parameters)
+        yield LLMStreamEvent(text_delta=response.answer)
+        yield LLMStreamEvent(response=response)
 
     @abstractmethod
     def health_check(self) -> bool:

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,9 @@ export function ThemedScrollArea({
 }: ThemedScrollAreaProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ pointerId: number; startY: number; startScrollTop: number } | null>(
+    null,
+  );
   const [thumb, setThumb] = useState({ height: 0, top: 0, visible: false });
 
   const updateThumb = useCallback(() => {
@@ -51,11 +54,46 @@ export function ThemedScrollArea({
     };
   }, [children, updateThumb]);
 
+  const startDragging = (event: PointerEvent<HTMLSpanElement>) => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startScrollTop: viewport.scrollTop,
+    };
+  };
+
+  const dragThumb = (event: PointerEvent<HTMLSpanElement>) => {
+    const drag = dragRef.current;
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
+    if (!drag || !viewport || !track || drag.pointerId !== event.pointerId) return;
+    const availableTravel = track.clientHeight - thumb.height;
+    if (availableTravel <= 0) return;
+    const scrollRange = viewport.scrollHeight - viewport.clientHeight;
+    viewport.scrollTop =
+      drag.startScrollTop + ((event.clientY - drag.startY) / availableTravel) * scrollRange;
+  };
+
+  const stopDragging = (event: PointerEvent<HTMLSpanElement>) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
   return (
     <div className={cn("relative min-h-0", className)}>
       <div
         ref={viewportRef}
-        className={cn("scrollbar-hidden h-full overflow-y-auto overscroll-contain", viewportClassName)}
+        className={cn(
+          "scrollbar-hidden h-full overflow-y-auto overscroll-contain",
+          viewportClassName,
+        )}
         aria-live={ariaLive}
       >
         <div>{children}</div>
@@ -63,19 +101,23 @@ export function ThemedScrollArea({
       <div
         ref={trackRef}
         className={cn(
-          "pointer-events-none absolute bottom-2 right-1 top-2 w-1.5 rounded-full transition-opacity duration-200",
+          "absolute bottom-2 right-1 top-2 w-2 rounded-full transition-opacity duration-200",
           variant === "dark" ? "bg-white/[0.05]" : "bg-[#102c2a]/[0.06]",
-          thumb.visible ? "opacity-100" : "opacity-0",
+          thumb.visible ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         aria-hidden="true"
       >
         {thumb.visible ? (
           <span
             className={cn(
-              "absolute inset-x-0 rounded-full shadow-sm transition-[background-color]",
+              "absolute inset-x-0 cursor-grab touch-none rounded-full shadow-sm transition-[background-color] active:cursor-grabbing",
               variant === "dark" ? "bg-teal-400/55" : "bg-[#102c2a]",
             )}
             style={{ height: thumb.height, transform: `translateY(${thumb.top}px)` }}
+            onPointerDown={startDragging}
+            onPointerMove={dragThumb}
+            onPointerUp={stopDragging}
+            onPointerCancel={stopDragging}
           />
         ) : null}
       </div>

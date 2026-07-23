@@ -1,4 +1,19 @@
-import type { MessageSource } from "@/components/chat/assistant-message";
+import type { SupportedLanguage } from "@/lib/languages";
+
+export interface MessageSource {
+  title: string;
+  category?: string;
+}
+
+export interface GeneratedDocument {
+  id: string;
+  filename: string;
+  document_type: string;
+  media_type: "application/pdf";
+  size_bytes: number;
+  created_at: string;
+  download_url: string;
+}
 
 export interface UserChatMessage {
   id: string;
@@ -15,6 +30,9 @@ export interface AssistantChatMessage {
   disclaimer: string;
   timestamp: string;
   generationTime: number;
+  language?: SupportedLanguage;
+  document?: GeneratedDocument | null;
+  documentError?: string | null;
 }
 
 export type ChatMessage = UserChatMessage | AssistantChatMessage;
@@ -22,6 +40,7 @@ export type ChatMessage = UserChatMessage | AssistantChatMessage;
 export interface Conversation {
   id: string;
   title: string;
+  titleCustomized?: boolean;
   messages: ChatMessage[];
   updatedAt: number;
 }

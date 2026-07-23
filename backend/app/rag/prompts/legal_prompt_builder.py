@@ -59,10 +59,12 @@ class LegalPromptBuilder(PromptBuilder):
         self,
         question: str,
         processed_context: ContextProcessingResult,
+        language: str = "English",
     ) -> LegalPrompt:
         """Validate, bound, and format retrieved evidence into one legal prompt."""
         started_at = perf_counter()
         normalized_question = self._validate_question(question)
+        normalized_language = self._validate_language(language)
         self._validate_processed_context(processed_context)
 
         formatted_context, selected_chunks = self._build_context(processed_context.chunks)
@@ -71,6 +73,7 @@ class LegalPromptBuilder(PromptBuilder):
             question=normalized_question,
             formatted_context=formatted_context,
             available_source_documents=self._format_available_sources(source_documents),
+            response_language=normalized_language,
         )
         prompt = LegalPrompt(
             system_prompt=LEGAL_SYSTEM_PROMPT.strip(),
@@ -145,6 +148,15 @@ class LegalPromptBuilder(PromptBuilder):
         normalized = question.strip()
         if not normalized:
             raise PromptValidationError("question cannot be empty")
+        return normalized
+
+    @staticmethod
+    def _validate_language(language: str) -> str:
+        if not isinstance(language, str):
+            raise TypeError("language must be a string")
+        normalized = " ".join(language.split())
+        if not normalized or len(normalized) > 50:
+            raise PromptValidationError("language must be a valid language name")
         return normalized
 
     @staticmethod

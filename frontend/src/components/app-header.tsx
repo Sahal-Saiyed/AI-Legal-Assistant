@@ -33,11 +33,14 @@ export function AppHeader({ onOpenSidebar, userName }: AppHeaderProps) {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          className="grid size-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-teal-200 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+          className="flex h-10 max-w-52 items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 text-slate-700 shadow-sm transition hover:border-teal-200 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
           aria-label="Open profile"
           title={userName}
         >
-          <UserRound className="size-4" strokeWidth={1.8} />
+          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-teal-50 text-teal-700">
+            <UserRound className="size-4" strokeWidth={1.8} />
+          </span>
+          <span className="min-w-0 truncate text-xs font-semibold">{userName}</span>
         </button>
       </div>
     </header>
