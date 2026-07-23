@@ -160,6 +160,9 @@ installation that previously indexed templates.
 
 The rebuild command replaces the configured collection and therefore requires
 the explicit `--yes` flag. Omit the flag to perform no destructive action.
+Before embedding or resetting Chroma, the script rejects duplicate source
+documents and duplicate deterministic chunk IDs, printing the conflicting
+knowledge-base paths so the duplicate files can be removed safely.
 
 ## Production verification
 
