@@ -4,6 +4,7 @@ import {
   FileText,
   LogOut,
   MessageSquareText,
+  MoreVertical,
   Pencil,
   Plus,
   Search,
@@ -11,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { BrandLogo } from "@/components/brand-logo";
 import type { Conversation } from "@/components/chat/types";
@@ -73,6 +74,7 @@ function SidebarContent(props: AppSidebarProps) {
   } = props;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTitle, setEditedTitle] = useState("");
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [selectedResource, setSelectedResource] = useState<LegalResource | null>(null);
   const [conversationPendingDeletion, setConversationPendingDeletion] =
     useState<Conversation | null>(null);
@@ -91,6 +93,23 @@ function SidebarContent(props: AppSidebarProps) {
         .sort((left, right) => right.updatedAt - left.updatedAt),
     [conversations, normalizedSearch],
   );
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest("[data-conversation-menu]")) setMenuOpenId(null);
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpenId(null);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [menuOpenId]);
+
   const startNewChat = () => {
     onNewChat();
     onClose();
@@ -255,24 +274,61 @@ function SidebarContent(props: AppSidebarProps) {
                       >
                         {conversation.title}
                       </button>
-                      <span className="flex shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                      <div className="relative shrink-0" data-conversation-menu>
                         <button
                           type="button"
-                          onClick={() => beginRename(conversation)}
-                          className="grid size-7 place-items-center rounded-lg text-teal-100/50 transition hover:bg-white/10 hover:text-white"
-                          aria-label={`Rename ${conversation.title}`}
+                          onClick={() =>
+                            setMenuOpenId((current) =>
+                              current === conversation.id ? null : conversation.id,
+                            )
+                          }
+                          aria-haspopup="menu"
+                          aria-expanded={menuOpenId === conversation.id}
+                          aria-label={`Options for ${conversation.title}`}
+                          className={cn(
+                            "grid size-7 place-items-center rounded-lg text-teal-100/60 transition hover:bg-white/10 hover:text-white",
+                            "opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100",
+                            menuOpenId === conversation.id && "bg-white/10 text-white opacity-100",
+                          )}
                         >
-                          <Pencil className="size-3.5" />
+                          <MoreVertical className="size-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteChat(conversation)}
-                          className="grid size-7 place-items-center rounded-lg text-teal-100/50 transition hover:bg-red-400/10 hover:text-red-300"
-                          aria-label={`Delete ${conversation.title}`}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </span>
+                        <AnimatePresence>
+                          {menuOpenId === conversation.id ? (
+                            <motion.div
+                              role="menu"
+                              initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                              transition={{ duration: 0.14, ease: "easeOut" }}
+                              className="absolute right-0 top-full z-50 mt-1 w-36 overflow-hidden rounded-xl border border-white/10 bg-[#123230] p-1 shadow-[0_18px_45px_-18px_rgba(0,0,0,0.7)]"
+                            >
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  beginRename(conversation);
+                                  setMenuOpenId(null);
+                                }}
+                                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+                              >
+                                <Pencil className="size-3.5 shrink-0" /> Rename
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  deleteChat(conversation);
+                                  setMenuOpenId(null);
+                                }}
+                                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-red-300 transition hover:bg-red-400/10 hover:text-red-200"
+                              >
+                                <Trash2 className="size-3.5 shrink-0" /> Delete
+                              </button>
+                            </motion.div>
+                          ) : null}
+                        </AnimatePresence>
+                      </div>
                     </>
                   )}
                 </motion.div>

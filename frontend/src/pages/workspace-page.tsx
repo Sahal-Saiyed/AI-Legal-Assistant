@@ -183,11 +183,11 @@ export function WorkspacePage() {
   });
 
   return (
-    <div className="min-h-dvh bg-[radial-gradient(circle_at_85%_0%,rgba(45,212,191,0.2),transparent_28%),linear-gradient(135deg,#dce8e5_0%,#f3f5f1_48%,#d6e4e2_100%)] p-0 sm:p-4 lg:h-dvh lg:overflow-hidden">
+    <div className="h-dvh overflow-hidden bg-[radial-gradient(circle_at_85%_0%,rgba(45,212,191,0.2),transparent_28%),linear-gradient(135deg,#dce8e5_0%,#f3f5f1_48%,#d6e4e2_100%)] p-0 sm:p-4">
       <a href="#workspace" className="skip-link">
         Skip to legal assistant
       </a>
-      <div className="mx-auto flex min-h-dvh max-w-[1560px] overflow-hidden bg-[#102c2a] shadow-[0_35px_90px_-35px_rgba(15,44,42,0.45)] sm:min-h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:h-[calc(100dvh-2rem)] lg:min-h-0">
+      <div className="mx-auto flex h-full min-h-0 max-w-[1560px] overflow-hidden bg-[#102c2a] shadow-[0_35px_90px_-35px_rgba(15,44,42,0.45)] sm:rounded-[32px]">
         <AppSidebar
           conversations={visibleConversations}
           activeConversationId={activeConversationId}

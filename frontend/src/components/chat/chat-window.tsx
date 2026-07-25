@@ -1,5 +1,6 @@
 import {
   AlertCircle,
+  ArrowUpRight,
   BookOpenText,
   BriefcaseBusiness,
   RotateCcw,
@@ -167,7 +168,7 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
 
   return (
     <Card
-      className="relative flex min-h-[calc(100dvh-92px)] min-w-0 flex-col overflow-hidden rounded-[24px] border border-white bg-white shadow-[0_18px_55px_-36px_rgba(15,55,50,0.25)] sm:min-h-[calc(100dvh-140px)] lg:h-full lg:min-h-0"
+      className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-white bg-white shadow-[0_18px_55px_-36px_rgba(15,55,50,0.25)]"
       aria-busy={isLoading}
     >
       <div className="pointer-events-none absolute left-1/3 top-0 h-24 w-1/2 rounded-full bg-teal-100/45 blur-3xl" />
@@ -195,19 +196,22 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
               <p className="mt-2 max-w-lg text-sm leading-6 text-slate-500">
                 Ask a legal question to begin.
               </p>
-              <div className="mt-8 grid w-full gap-3 sm:grid-cols-3">
+              <div className="mt-8 grid w-full gap-2.5 sm:grid-cols-3 sm:gap-3">
                 {suggestions.map(({ icon: Icon, label }) => (
                   <button
                     key={label}
                     type="button"
                     onClick={() => void sendMessage(label)}
                     disabled={isLoading}
-                    className="group flex min-h-28 flex-col items-start justify-between rounded-2xl border border-white bg-white/80 p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-float disabled:pointer-events-none disabled:opacity-50"
+                    className="group flex items-center gap-3 rounded-2xl border border-stone-200/80 bg-white p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-float active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 sm:min-h-32 sm:flex-col sm:items-start sm:justify-between sm:p-4"
                   >
-                    <Icon className="size-5 text-[#2d7b69]" strokeWidth={1.7} />
-                    <span className="mt-5 text-xs font-medium leading-5 text-slate-600 group-hover:text-slate-900">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#dff2ea] text-[#2d7b69] transition-colors group-hover:bg-[#cdeade] sm:size-10">
+                      <Icon className="size-5" strokeWidth={1.7} />
+                    </span>
+                    <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-slate-600 group-hover:text-slate-900 sm:mt-4 sm:flex-none sm:text-xs">
                       {label}
                     </span>
+                    <ArrowUpRight className="size-4 shrink-0 text-slate-300 transition-colors group-hover:text-teal-600 sm:hidden" />
                   </button>
                 ))}
               </div>

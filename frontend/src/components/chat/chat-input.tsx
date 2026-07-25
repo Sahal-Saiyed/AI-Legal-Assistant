@@ -58,7 +58,7 @@ export function ChatInput({
           value={language}
           onChange={onLanguageChange}
           disabled={disabled}
-          className="mb-0.5 hidden sm:inline-flex"
+          className="mb-0.5"
         />
         <textarea
           ref={inputRef}
@@ -82,15 +82,6 @@ export function ChatInput({
         >
           <ArrowUp className="size-4" />
         </Button>
-      </div>
-      <div className="mx-auto mt-2 flex w-fit items-center gap-2 text-[10px] text-slate-500 sm:hidden">
-        <span>Answer in</span>
-        <LanguageSelector
-          value={language}
-          disabled={disabled}
-          onChange={onLanguageChange}
-          showIcon={false}
-        />
       </div>
       <p
         id="legal-question-hint"

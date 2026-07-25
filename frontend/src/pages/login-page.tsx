@@ -112,7 +112,7 @@ export function LoginPage() {
                 exit={{ opacity: 0 }}
               >
                 <div className="mb-7">
-                  <BrandLogo className="size-11 rounded-2xl bg-teal-50 shadow-none" />
+                  <BrandLogo className="hidden size-11 rounded-2xl bg-teal-50 shadow-none md:block" />
                   <h1 className="mt-5 text-3xl font-semibold tracking-[-0.04em] text-slate-950">
                     {registerMode ? "Create account" : "Welcome back"}
                   </h1>
