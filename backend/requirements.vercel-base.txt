@@ -2,13 +2,6 @@
 fastapi>=0.116,<1.0
 uvicorn>=0.35,<1.0
 
-# Local retrieval and CPU embedding inference
-chromadb>=1.0,<2.0
-langchain-core>=0.3,<1.0
-numpy>=1.26,<3.0
-torch==2.8.0
-transformers>=4.54,<5.0
-
 # Gemini generation
 google-genai>=1.0,<3.0
 

@@ -1,0 +1,3 @@
+# Kept separate because Chroma's native and telemetry dependencies form a
+# relatively large container layer.
+chromadb>=1.0,<2.0

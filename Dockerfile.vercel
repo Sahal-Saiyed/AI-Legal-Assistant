@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.11-slim
+FROM python:3.11-slim AS runtime-deps
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -15,17 +15,43 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install the smaller CPU-only PyTorch wheel before the remaining dependencies.
-COPY backend/requirements.vercel.txt /tmp/requirements.vercel.txt
-RUN python -m pip install --upgrade pip \
-    && python -m pip install torch==2.8.0 \
-        --index-url https://download.pytorch.org/whl/cpu \
-    && python -m pip install -r /tmp/requirements.vercel.txt
+# Keep large dependency families in separate OCI layers. Vercel Container
+# Registry rejects an individual oversized layer even when the complete image
+# is within the Function package limit.
+COPY backend/requirements.vercel-base.txt /tmp/requirements.vercel-base.txt
+COPY backend/requirements.vercel-ml.txt /tmp/requirements.vercel-ml.txt
+COPY backend/requirements.vercel-chroma.txt /tmp/requirements.vercel-chroma.txt
 
-# Bake the embedding model into the immutable image. This avoids downloading
-# hundreds of megabytes during the first production request.
-RUN HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 python -c \
-    "from pathlib import Path; from transformers import AutoModel, AutoTokenizer; target=Path('/opt/models/e5-base-v2'); target.mkdir(parents=True, exist_ok=True); tokenizer=AutoTokenizer.from_pretrained('intfloat/e5-base-v2'); model=AutoModel.from_pretrained('intfloat/e5-base-v2'); tokenizer.save_pretrained(target); model.save_pretrained(target)"
+RUN python -m pip install --upgrade pip
+RUN python -m pip install -r /tmp/requirements.vercel-base.txt
+RUN python -m pip install torch==2.8.0 \
+    --index-url https://download.pytorch.org/whl/cpu
+RUN python -m pip install -r /tmp/requirements.vercel-ml.txt
+RUN python -m pip install -r /tmp/requirements.vercel-chroma.txt \
+    && python -m pip check
+
+
+FROM runtime-deps AS model-builder
+
+# Download the model only in this temporary stage. The helper saves
+# Transformers-compatible shards and balances them across small directories.
+COPY backend/build/prepare_vercel_model.py /tmp/prepare_vercel_model.py
+RUN HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 \
+    python /tmp/prepare_vercel_model.py
+
+
+FROM runtime-deps AS runtime
+
+# Each COPY creates a separate registry layer. Empty directories are created by
+# the helper as well, so the number of COPY statements remains deterministic.
+COPY --from=model-builder /tmp/model-layers/01/ /opt/models/e5-base-v2/
+COPY --from=model-builder /tmp/model-layers/02/ /opt/models/e5-base-v2/
+COPY --from=model-builder /tmp/model-layers/03/ /opt/models/e5-base-v2/
+COPY --from=model-builder /tmp/model-layers/04/ /opt/models/e5-base-v2/
+COPY --from=model-builder /tmp/model-layers/05/ /opt/models/e5-base-v2/
+COPY --from=model-builder /tmp/model-layers/06/ /opt/models/e5-base-v2/
+COPY --from=model-builder /tmp/model-layers/07/ /opt/models/e5-base-v2/
+COPY --from=model-builder /tmp/model-layers/08/ /opt/models/e5-base-v2/
 
 COPY backend /app/backend
 COPY vector_dbs/chroma /app/vector_dbs/chroma

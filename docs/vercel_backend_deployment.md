@@ -21,7 +21,9 @@ are present in Git:
 
 - `Dockerfile.vercel`
 - `.dockerignore`
-- `backend/requirements.vercel.txt`
+- `backend/requirements.vercel-base.txt`
+- `backend/requirements.vercel-ml.txt`
+- `backend/requirements.vercel-chroma.txt`
 - `vector_dbs/chroma/**`
 - `knowledge_base/templates/**`
 
