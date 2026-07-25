@@ -58,7 +58,7 @@ export function ChatInput({
           value={language}
           onChange={onLanguageChange}
           disabled={disabled}
-          className="mb-0.5"
+          className="self-end"
         />
         <textarea
           ref={inputRef}
@@ -66,12 +66,12 @@ export function ChatInput({
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask your legal question..."
+          placeholder="Ask a legal question…"
           rows={1}
           disabled={disabled}
           maxLength={4000}
           aria-describedby="legal-question-hint"
-          className="max-h-32 min-h-10 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-1 py-2.5 text-sm leading-5 text-slate-700 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+          className="max-h-32 min-h-10 min-w-0 flex-1 resize-none self-end overflow-y-auto bg-transparent px-1 py-2.5 text-sm leading-5 text-slate-700 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
           aria-label="Legal question"
         />
         <Button
@@ -79,6 +79,7 @@ export function ChatInput({
           size="icon"
           disabled={disabled || !message.trim()}
           aria-label="Send question"
+          className="shrink-0 self-end"
         >
           <ArrowUp className="size-4" />
         </Button>

@@ -12,7 +12,8 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { BrandLogo } from "@/components/brand-logo";
 import type { Conversation } from "@/components/chat/types";
@@ -57,6 +58,118 @@ interface AppSidebarProps {
   onRenameConversation: (id: string, title: string) => void;
   onDeleteConversation: (id: string) => void;
   onLogout: () => void;
+}
+
+interface ConversationMenuProps {
+  conversation: Conversation;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+}
+
+const MENU_WIDTH = 168;
+const MENU_HEIGHT = 92;
+
+function ConversationMenu({
+  conversation,
+  open,
+  onToggle,
+  onClose,
+  onRename,
+  onDelete,
+}: ConversationMenuProps) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPosition(null);
+      return;
+    }
+    const update = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top =
+        spaceBelow < MENU_HEIGHT + 12 ? rect.top - MENU_HEIGHT - 6 : rect.bottom + 6;
+      const left = Math.max(
+        8,
+        Math.min(rect.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8),
+      );
+      setPosition({ top, left });
+    };
+    update();
+    window.addEventListener("resize", update);
+    // capture-phase so scrolling any ancestor (incl. the chat list) repositions the menu
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative shrink-0" data-conversation-menu>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={onToggle}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Options for ${conversation.title}`}
+        className={cn(
+          "grid size-7 place-items-center rounded-lg text-teal-100/60 transition hover:bg-white/10 hover:text-white",
+          "opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100",
+          open && "bg-white/10 text-white opacity-100",
+        )}
+      >
+        <MoreVertical className="size-3.5" />
+      </button>
+      {open && position
+        ? createPortal(
+            <>
+              <button
+                type="button"
+                aria-label="Close menu"
+                tabIndex={-1}
+                onClick={onClose}
+                className="fixed inset-0 z-[119] cursor-default"
+              />
+              <motion.div
+                role="menu"
+                data-conversation-menu
+                initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.14, ease: "easeOut" }}
+                style={{ position: "fixed", top: position.top, left: position.left, width: MENU_WIDTH }}
+                className="z-[120] overflow-hidden rounded-xl border border-white/10 bg-[#123230] p-1 shadow-[0_18px_45px_-18px_rgba(0,0,0,0.75)]"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={onRename}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+                >
+                  <Pencil className="size-3.5 shrink-0" /> Rename
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={onDelete}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-red-300 transition hover:bg-red-400/10 hover:text-red-200"
+                >
+                  <Trash2 className="size-3.5 shrink-0" /> Delete
+                </button>
+              </motion.div>
+            </>,
+            document.body,
+          )
+        : null}
+    </div>
+  );
 }
 
 function SidebarContent(props: AppSidebarProps) {
@@ -158,7 +271,7 @@ function SidebarContent(props: AppSidebarProps) {
         </Button>
       </div>
 
-      <label className="relative mt-7 block">
+      <label className="relative mt-5 block sm:mt-7">
         <span className="sr-only">Search messages in recent chats</span>
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-teal-100/40" />
         <input
@@ -181,7 +294,7 @@ function SidebarContent(props: AppSidebarProps) {
         ) : null}
       </label>
 
-      <section className="mt-5 flex min-h-0 flex-1 flex-col" aria-labelledby="history-heading">
+      <section className="mt-4 flex min-h-0 flex-1 flex-col sm:mt-5" aria-labelledby="history-heading">
         <div className="flex items-center justify-between px-2">
           <h2
             id="history-heading"
@@ -274,61 +387,24 @@ function SidebarContent(props: AppSidebarProps) {
                       >
                         {conversation.title}
                       </button>
-                      <div className="relative shrink-0" data-conversation-menu>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setMenuOpenId((current) =>
-                              current === conversation.id ? null : conversation.id,
-                            )
-                          }
-                          aria-haspopup="menu"
-                          aria-expanded={menuOpenId === conversation.id}
-                          aria-label={`Options for ${conversation.title}`}
-                          className={cn(
-                            "grid size-7 place-items-center rounded-lg text-teal-100/60 transition hover:bg-white/10 hover:text-white",
-                            "opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100",
-                            menuOpenId === conversation.id && "bg-white/10 text-white opacity-100",
-                          )}
-                        >
-                          <MoreVertical className="size-3.5" />
-                        </button>
-                        <AnimatePresence>
-                          {menuOpenId === conversation.id ? (
-                            <motion.div
-                              role="menu"
-                              initial={{ opacity: 0, y: 4, scale: 0.98 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                              transition={{ duration: 0.14, ease: "easeOut" }}
-                              className="absolute right-0 top-full z-50 mt-1 w-36 overflow-hidden rounded-xl border border-white/10 bg-[#123230] p-1 shadow-[0_18px_45px_-18px_rgba(0,0,0,0.7)]"
-                            >
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  beginRename(conversation);
-                                  setMenuOpenId(null);
-                                }}
-                                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
-                              >
-                                <Pencil className="size-3.5 shrink-0" /> Rename
-                              </button>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  deleteChat(conversation);
-                                  setMenuOpenId(null);
-                                }}
-                                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-red-300 transition hover:bg-red-400/10 hover:text-red-200"
-                              >
-                                <Trash2 className="size-3.5 shrink-0" /> Delete
-                              </button>
-                            </motion.div>
-                          ) : null}
-                        </AnimatePresence>
-                      </div>
+                      <ConversationMenu
+                        conversation={conversation}
+                        open={menuOpenId === conversation.id}
+                        onToggle={() =>
+                          setMenuOpenId((current) =>
+                            current === conversation.id ? null : conversation.id,
+                          )
+                        }
+                        onClose={() => setMenuOpenId(null)}
+                        onRename={() => {
+                          beginRename(conversation);
+                          setMenuOpenId(null);
+                        }}
+                        onDelete={() => {
+                          deleteChat(conversation);
+                          setMenuOpenId(null);
+                        }}
+                      />
                     </>
                   )}
                 </motion.div>
@@ -339,7 +415,7 @@ function SidebarContent(props: AppSidebarProps) {
       </section>
 
       <section
-        className="relative mt-5 overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-white/[0.14] to-teal-300/[0.07] p-5 shadow-[0_20px_55px_-30px_rgba(45,212,191,0.75)] backdrop-blur-xl"
+        className="relative mt-4 overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-white/[0.14] to-teal-300/[0.07] p-4 shadow-[0_20px_55px_-30px_rgba(45,212,191,0.75)] backdrop-blur-xl sm:mt-5 sm:p-5"
         aria-labelledby="resources-heading"
       >
         <div className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-teal-300/15 blur-xl" />
@@ -352,10 +428,10 @@ function SidebarContent(props: AppSidebarProps) {
             Resource Documents
           </h2>
         </div>
-        <p className="relative mt-3 text-[10px] leading-4 text-teal-50/60">
+        <p className="relative mt-2 text-[10px] leading-4 text-teal-50/60 sm:mt-3">
           Trusted legal references used by JuriGPT.
         </p>
-        <div className="relative mt-3 space-y-1 rounded-2xl border border-white/[0.06] bg-slate-950/10 p-2.5">
+        <div className="relative mt-2.5 space-y-0.5 rounded-2xl border border-white/[0.06] bg-slate-950/10 p-2 sm:mt-3 sm:space-y-1 sm:p-2.5">
           {resources.map((resource) => (
             <motion.button
               type="button"
@@ -363,10 +439,10 @@ function SidebarContent(props: AppSidebarProps) {
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedResource(resource)}
               key={resource.title}
-              className="flex w-full min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 text-left text-[10px] leading-4 text-teal-50/80 transition hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+              className="flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-2 text-left text-[11px] leading-4 text-teal-50/80 transition hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 sm:py-1.5 sm:text-[10px]"
               aria-label={`Open ${resource.title}`}
             >
-              <FileText className="size-3 shrink-0" />
+              <FileText className="size-3.5 shrink-0 sm:size-3" />
               <span className="truncate">{resource.title}</span>
             </motion.button>
           ))}
@@ -376,7 +452,7 @@ function SidebarContent(props: AppSidebarProps) {
       <button
         type="button"
         onClick={onLogout}
-        className="mt-4 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-xs text-teal-100/50 transition hover:bg-white/[0.06] hover:text-white"
+        className="mt-3 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-teal-100/50 transition hover:bg-white/[0.06] hover:text-white sm:mt-4 sm:py-2"
         title="Log out"
       >
         <LogOut className="size-4" /> Log out

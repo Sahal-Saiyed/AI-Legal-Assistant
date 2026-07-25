@@ -76,7 +76,7 @@ export function LanguageSelector({
             setOpen(true);
           }
         }}
-        className="inline-flex h-9 w-auto items-center gap-1.5 whitespace-nowrap rounded-xl border border-teal-100/80 bg-teal-50 px-2.5 text-[10px] font-semibold text-teal-800 shadow-sm transition hover:border-teal-200 hover:bg-teal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex h-10 w-auto items-center gap-1.5 whitespace-nowrap rounded-xl border border-teal-100/80 bg-teal-50 px-2.5 text-[10px] font-semibold text-teal-800 shadow-sm transition hover:border-teal-200 hover:bg-teal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {showIcon ? <Languages className="size-3.5 shrink-0 text-teal-700" /> : null}
         <span>{selectedLanguage.nativeLabel}</span>
