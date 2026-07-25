@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
@@ -133,7 +134,10 @@ class RAGService:
         from backend.app.templates import TemplateLoader
 
         llm_config = LLMConfig.from_env()
-        retriever = ChromaRetriever(embedder=E5Embedder())
+        embedding_model = os.getenv("E5_MODEL_NAME", "intfloat/e5-base-v2").strip()
+        if not embedding_model:
+            raise RAGServiceConfigurationError("E5_MODEL_NAME cannot be empty")
+        retriever = ChromaRetriever(embedder=E5Embedder(model_name=embedding_model))
         llm_factory = lambda: GeminiClient(llm_config)
         return cls(
             retriever=retriever,

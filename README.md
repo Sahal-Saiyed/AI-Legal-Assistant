@@ -1,5 +1,8 @@
 # JuriGPT
 
+> Deployment: see
+> [Deploy the backend as a separate Vercel container](docs/vercel_backend_deployment.md).
+
 JuriGPT is a retrieval-augmented AI legal assistant for Indian law. It retrieves
 grounded material from a curated knowledge base, streams multilingual answers,
 preserves authenticated conversations in MongoDB Atlas, and can automatically

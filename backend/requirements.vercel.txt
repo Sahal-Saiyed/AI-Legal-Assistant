@@ -1,0 +1,24 @@
+# API server
+fastapi>=0.116,<1.0
+uvicorn>=0.35,<1.0
+
+# Local retrieval and CPU embedding inference
+chromadb>=1.0,<2.0
+langchain-core>=0.3,<1.0
+numpy>=1.26,<3.0
+torch==2.8.0
+transformers>=4.54,<5.0
+
+# Gemini generation
+google-genai>=1.0,<3.0
+
+# Authentication and persistence
+pymongo[srv]>=4.11,<5.0
+pwdlib[argon2]>=0.2,<1.0
+PyJWT>=2.10,<3.0
+email-validator>=2.2,<3.0
+
+# Configuration and generated legal documents
+python-dotenv>=1.1,<2.0
+PyMuPDF>=1.26,<2.0
+reportlab>=4.4,<5.0

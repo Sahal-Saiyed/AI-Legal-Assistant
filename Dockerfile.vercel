@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1
+
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    TOKENIZERS_PARALLELISM=false \
+    OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1 \
+    E5_MODEL_NAME=/opt/models/e5-base-v2
+
+WORKDIR /app
+
+# Install the smaller CPU-only PyTorch wheel before the remaining dependencies.
+COPY backend/requirements.vercel.txt /tmp/requirements.vercel.txt
+RUN python -m pip install --upgrade pip \
+    && python -m pip install torch==2.8.0 \
+        --index-url https://download.pytorch.org/whl/cpu \
+    && python -m pip install -r /tmp/requirements.vercel.txt
+
+# Bake the embedding model into the immutable image. This avoids downloading
+# hundreds of megabytes during the first production request.
+RUN HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 python -c \
+    "from pathlib import Path; from transformers import AutoModel, AutoTokenizer; target=Path('/opt/models/e5-base-v2'); target.mkdir(parents=True, exist_ok=True); tokenizer=AutoTokenizer.from_pretrained('intfloat/e5-base-v2'); model=AutoModel.from_pretrained('intfloat/e5-base-v2'); tokenizer.save_pretrained(target); model.save_pretrained(target)"
+
+COPY backend /app/backend
+COPY vector_dbs/chroma /app/vector_dbs/chroma
+COPY knowledge_base/templates /app/knowledge_base/templates
+
+# Vercel supplies PORT at runtime. Use one worker so the embedding model is
+# loaded only once per container instance.
+CMD ["sh", "-c", "exec uvicorn backend.app.main:app --host 0.0.0.0 --port \"${PORT:-8000}\" --workers 1"]
