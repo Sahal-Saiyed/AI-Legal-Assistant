@@ -1,5 +1,6 @@
 import { AlertCircle, LoaderCircle, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { useAuth } from "@/auth/auth-state";
 import { AppHeader } from "@/components/app-header";
@@ -33,6 +34,10 @@ function createConversationTitle(question: string) {
 
 export function WorkspacePage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { conversationId: routeConversationId } = useParams<{
+    conversationId: string;
+  }>();
   const [conversations, setConversations] = useState<Conversation[]>(() => [createConversation()]);
   const [activeConversationId, setActiveConversationId] = useState(() => conversations[0].id);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,6 +45,7 @@ export function WorkspacePage() {
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [persistenceError, setPersistenceError] = useState<string | null>(null);
   const persistenceQueues = useRef(new Map<string, Promise<void>>());
+  const initialRouteConversationId = useRef(routeConversationId);
   const activeConversation =
     conversations.find((conversation) => conversation.id === activeConversationId) ??
     conversations[0];
@@ -89,10 +95,12 @@ export function WorkspacePage() {
     const existingEmpty = conversations.find((conversation) => conversation.messages.length === 0);
     if (existingEmpty) {
       setActiveConversationId(existingEmpty.id);
+      navigate(`/chat/${encodeURIComponent(existingEmpty.id)}`);
     } else {
       const conversation = createConversation();
       setConversations((current) => [conversation, ...current]);
       setActiveConversationId(conversation.id);
+      navigate(`/chat/${encodeURIComponent(conversation.id)}`);
     }
     requestAnimationFrame(() =>
       document.querySelector<HTMLTextAreaElement>("#legal-question-input")?.focus(),
@@ -101,6 +109,7 @@ export function WorkspacePage() {
 
   const selectConversation = (conversationId: string) => {
     setActiveConversationId(conversationId);
+    navigate(`/chat/${encodeURIComponent(conversationId)}`);
     setSidebarOpen(false);
   };
 
@@ -128,11 +137,13 @@ export function WorkspacePage() {
       const replacement = createConversation();
       setActiveConversationId(replacement.id);
       setConversations([replacement]);
+      navigate(`/chat/${encodeURIComponent(replacement.id)}`, { replace: true });
       return;
     }
     setConversations(remaining);
     if (conversationId === activeConversationId) {
       setActiveConversationId(remaining[0].id);
+      navigate(`/chat/${encodeURIComponent(remaining[0].id)}`, { replace: true });
     }
   };
 
@@ -144,8 +155,17 @@ export function WorkspacePage() {
       .then((savedConversations) => {
         if (cancelled) return;
         const loaded = savedConversations.length > 0 ? savedConversations : [createConversation()];
+        const requestedConversation = initialRouteConversationId.current
+          ? loaded.find((conversation) => conversation.id === initialRouteConversationId.current)
+          : undefined;
+        const selectedConversation = requestedConversation ?? loaded[0];
         setConversations(loaded);
-        setActiveConversationId(loaded[0].id);
+        setActiveConversationId(selectedConversation.id);
+        if (initialRouteConversationId.current !== selectedConversation.id) {
+          navigate(`/chat/${encodeURIComponent(selectedConversation.id)}`, {
+            replace: true,
+          });
+        }
         setPersistenceError(null);
       })
       .catch((error: unknown) => {
@@ -157,7 +177,30 @@ export function WorkspacePage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [navigate, user]);
+
+  useEffect(() => {
+    if (loadingConversations || !routeConversationId) return;
+    const requestedConversation = conversations.find(
+      (conversation) => conversation.id === routeConversationId,
+    );
+    if (requestedConversation) {
+      if (requestedConversation.id !== activeConversationId) {
+        setActiveConversationId(requestedConversation.id);
+      }
+      return;
+    }
+    navigate(`/chat/${encodeURIComponent(activeConversation.id)}`, {
+      replace: true,
+    });
+  }, [
+    activeConversation.id,
+    activeConversationId,
+    conversations,
+    loadingConversations,
+    navigate,
+    routeConversationId,
+  ]);
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
