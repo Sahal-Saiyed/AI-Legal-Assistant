@@ -22,9 +22,19 @@ class MongoDatabase:
         self._client.admin.command("ping")
         self._database = self._client[config.mongodb_database]
         self._users = self._database["users"]
+        self._sessions = self._database["sessions"]
         self._conversations = self._database["conversations"]
         self._generated_documents = self._database["generated_documents"]
         self._users.create_index([( "email", ASCENDING)], unique=True, name="uq_users_email")
+        self._sessions.create_index(
+            [("expires_at", ASCENDING)],
+            expireAfterSeconds=0,
+            name="ttl_sessions_expires",
+        )
+        self._sessions.create_index(
+            [("user_id", ASCENDING)],
+            name="ix_sessions_user",
+        )
         self._conversations.create_index(
             [("user_id", ASCENDING), ("updated_at", DESCENDING)],
             name="ix_conversations_user_updated",
@@ -41,6 +51,10 @@ class MongoDatabase:
     @property
     def conversations(self) -> Collection:
         return self._conversations
+
+    @property
+    def sessions(self) -> Collection:
+        return self._sessions
 
     @property
     def generated_documents(self) -> Collection:

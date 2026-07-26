@@ -29,7 +29,8 @@ def get_mongo_database() -> MongoDatabase:
 @lru_cache(maxsize=1)
 def get_auth_service() -> AuthService:
     config = AuthConfig.from_env()
-    return AuthService(get_mongo_database().users, config)
+    database = get_mongo_database()
+    return AuthService(database.users, database.sessions, config)
 
 
 @lru_cache(maxsize=1)

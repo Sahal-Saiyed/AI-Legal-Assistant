@@ -17,7 +17,7 @@ class AuthConfig:
     mongodb_database: str
     jwt_secret_key: str
     jwt_algorithm: str
-    access_token_expire_minutes: int
+    session_inactivity_hours: int
 
     @classmethod
     def from_env(cls) -> "AuthConfig":
@@ -35,9 +35,15 @@ class AuthConfig:
         database = os.getenv("MONGODB_DATABASE", "jurigpt").strip()
         algorithm = os.getenv("JWT_ALGORITHM", "HS256").strip()
         try:
-            expiry = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+            inactivity_hours = int(os.getenv("SESSION_INACTIVITY_HOURS", "48"))
         except ValueError as exc:
-            raise RuntimeError("ACCESS_TOKEN_EXPIRE_MINUTES must be an integer") from exc
-        if not database or not algorithm or expiry <= 0:
+            raise RuntimeError("SESSION_INACTIVITY_HOURS must be an integer") from exc
+        if not database or not algorithm or inactivity_hours <= 0:
             raise RuntimeError("Authentication configuration contains invalid values")
-        return cls(required["MONGODB_URI"], database, required["JWT_SECRET_KEY"], algorithm, expiry)
+        return cls(
+            required["MONGODB_URI"],
+            database,
+            required["JWT_SECRET_KEY"],
+            algorithm,
+            inactivity_hours,
+        )

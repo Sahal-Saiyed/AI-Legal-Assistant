@@ -2,7 +2,8 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from backend.app.core.dependencies import get_auth_service, get_current_user
 from backend.app.schemas.auth import AuthenticatedUser, AuthResponse, LoginRequest, RegisterRequest
@@ -13,6 +14,7 @@ from backend.app.services.auth_service import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+bearer_scheme = HTTPBearer()
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -44,3 +46,20 @@ def login(
 @router.get("/me", response_model=AuthenticatedUser)
 def current_user(user: Annotated[AuthenticatedUser, Depends(get_current_user)]) -> AuthenticatedUser:
     return user
+
+
+@router.post("/session", response_model=AuthenticatedUser)
+def renew_session(
+    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+) -> AuthenticatedUser:
+    """Renew and return the current sliding authentication session."""
+    return user
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
+    service: Annotated[AuthService, Depends(get_auth_service)],
+) -> Response:
+    service.revoke_session(credentials.credentials)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

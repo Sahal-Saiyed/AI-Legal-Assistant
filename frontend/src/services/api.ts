@@ -11,10 +11,23 @@ const apiClient = axios.create({
   timeout: 120_000,
 });
 
-const TOKEN_KEY = "jurigpt_access_token";
+export const AUTH_TOKEN_STORAGE_KEY = "jurigpt_access_token";
+const legacySessionToken = sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+if (!localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) && legacySessionToken) {
+  localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, legacySessionToken);
+}
+sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+
+function getAuthToken() {
+  return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+function storeAuthToken(token: string) {
+  localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+}
 
 apiClient.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = getAuthToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -27,7 +40,7 @@ apiClient.interceptors.response.use(
       error.response?.status === 401 &&
       !error.config?.url?.includes("/auth/login")
     ) {
-      sessionStorage.removeItem(TOKEN_KEY);
+      clearAuthToken();
       window.dispatchEvent(new Event("jurigpt:unauthorized"));
     }
     return Promise.reject(error);
@@ -53,13 +66,13 @@ export async function registerAccount(name: string, email: string, password: str
     email,
     password,
   });
-  sessionStorage.setItem(TOKEN_KEY, response.data.access_token);
+  storeAuthToken(response.data.access_token);
   return response.data;
 }
 
 export async function loginAccount(email: string, password: string) {
   const response = await apiClient.post<AuthResponse>("/api/v1/auth/login", { email, password });
-  sessionStorage.setItem(TOKEN_KEY, response.data.access_token);
+  storeAuthToken(response.data.access_token);
   return response.data;
 }
 
@@ -69,11 +82,44 @@ export async function getCurrentUser() {
 }
 
 export function hasAuthToken() {
-  return Boolean(sessionStorage.getItem(TOKEN_KEY));
+  return Boolean(getAuthToken());
 }
 
 export function clearAuthToken() {
-  sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+export async function renewAuthSession(keepalive = false): Promise<void> {
+  const token = getAuthToken();
+  if (!token) return;
+  if (!keepalive) {
+    await apiClient.post("/api/v1/auth/session");
+    return;
+  }
+
+  const baseUrl = String(apiClient.defaults.baseURL ?? "").replace(/\/$/, "");
+  const response = await fetch(`${baseUrl}/api/v1/auth/session`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    keepalive: true,
+  });
+  if (response.status === 401) {
+    clearAuthToken();
+    window.dispatchEvent(new Event("jurigpt:unauthorized"));
+  }
+}
+
+export async function logoutAccount(): Promise<void> {
+  const token = getAuthToken();
+  clearAuthToken();
+  if (!token) return;
+  const baseUrl = String(apiClient.defaults.baseURL ?? "").replace(/\/$/, "");
+  await fetch(`${baseUrl}/api/v1/auth/logout`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    keepalive: true,
+  }).catch(() => undefined);
 }
 
 export function getAuthError(error: unknown): string {
@@ -130,7 +176,7 @@ export async function streamLegalQuestion(
   conversationContext: ConversationContextMessage[] = [],
 ): Promise<AskResponse> {
   const baseUrl = String(apiClient.defaults.baseURL ?? "").replace(/\/$/, "");
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = getAuthToken();
   const response = await fetch(`${baseUrl}/api/v1/ask/stream`, {
     method: "POST",
     headers: {
@@ -147,7 +193,7 @@ export async function streamLegalQuestion(
   });
 
   if (response.status === 401) {
-    sessionStorage.removeItem(TOKEN_KEY);
+    clearAuthToken();
     window.dispatchEvent(new Event("jurigpt:unauthorized"));
   }
   if (!response.ok) {
@@ -309,12 +355,12 @@ export function getConversationApiError(error: unknown): string {
 
 export async function downloadGeneratedDocument(document: GeneratedDocument): Promise<void> {
   const baseUrl = String(apiClient.defaults.baseURL ?? "").replace(/\/$/, "");
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = getAuthToken();
   const response = await fetch(`${baseUrl}${document.download_url}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (response.status === 401) {
-    sessionStorage.removeItem(TOKEN_KEY);
+    clearAuthToken();
     window.dispatchEvent(new Event("jurigpt:unauthorized"));
   }
   if (!response.ok) throw new Error("The generated PDF could not be downloaded.");

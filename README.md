@@ -104,7 +104,7 @@ MONGODB_DATABASE=jurigpt
 
 JWT_SECRET_KEY=use-a-random-secret-containing-at-least-32-characters
 JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
+SESSION_INACTIVITY_HOURS=48
 ```
 
 MongoDB creates the `users`, `conversations`, and `generated_documents`
