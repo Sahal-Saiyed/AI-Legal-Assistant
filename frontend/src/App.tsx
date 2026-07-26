@@ -29,8 +29,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/chat" element={<WorkspacePage />} />
-            <Route path="/chat/:conversationId" element={<WorkspacePage />} />
+            <Route path="/chat/:conversationId?" element={<WorkspacePage />} />
           </Route>
           <Route path="/" element={<Navigate to="/chat" replace />} />
           <Route path="*" element={<Navigate to="/chat" replace />} />

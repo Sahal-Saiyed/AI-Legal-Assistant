@@ -87,6 +87,12 @@ export function WorkspacePage() {
       ),
     );
     if (messages.length > 0) {
+      if (routeConversationId !== updatedConversation.id) {
+        pendingLocalRouteId.current = updatedConversation.id;
+        navigate(`/chat/${encodeURIComponent(updatedConversation.id)}`, {
+          replace: true,
+        });
+      }
       enqueuePersistence(updatedConversation.id, () => saveConversation(updatedConversation));
     }
   };
@@ -97,13 +103,13 @@ export function WorkspacePage() {
     if (existingEmpty) {
       pendingLocalRouteId.current = existingEmpty.id;
       setActiveConversationId(existingEmpty.id);
-      navigate(`/chat/${encodeURIComponent(existingEmpty.id)}`);
+      navigate("/chat");
     } else {
       const conversation = createConversation();
       pendingLocalRouteId.current = conversation.id;
       setConversations((current) => [conversation, ...current]);
       setActiveConversationId(conversation.id);
-      navigate(`/chat/${encodeURIComponent(conversation.id)}`);
+      navigate("/chat");
     }
     requestAnimationFrame(() =>
       document.querySelector<HTMLTextAreaElement>("#legal-question-input")?.focus(),
@@ -142,14 +148,18 @@ export function WorkspacePage() {
       pendingLocalRouteId.current = replacement.id;
       setActiveConversationId(replacement.id);
       setConversations([replacement]);
-      navigate(`/chat/${encodeURIComponent(replacement.id)}`, { replace: true });
+      navigate("/chat", { replace: true });
       return;
     }
     setConversations(remaining);
     if (conversationId === activeConversationId) {
-      pendingLocalRouteId.current = remaining[0].id;
-      setActiveConversationId(remaining[0].id);
-      navigate(`/chat/${encodeURIComponent(remaining[0].id)}`, { replace: true });
+      const replacement = remaining[0];
+      const replacementHasMessages = replacement.messages.length > 0;
+      pendingLocalRouteId.current = replacement.id;
+      setActiveConversationId(replacement.id);
+      navigate(replacementHasMessages ? `/chat/${encodeURIComponent(replacement.id)}` : "/chat", {
+        replace: true,
+      });
     }
   };
 
@@ -174,11 +184,6 @@ export function WorkspacePage() {
         pendingLocalRouteId.current = selectedConversation.id;
         setConversations(loaded);
         setActiveConversationId(selectedConversation.id);
-        if (initialRouteConversationId.current !== selectedConversation.id) {
-          navigate(`/chat/${encodeURIComponent(selectedConversation.id)}`, {
-            replace: true,
-          });
-        }
         setPersistenceError(null);
       })
       .catch((error: unknown) => {
@@ -190,10 +195,17 @@ export function WorkspacePage() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, user]);
+  }, [user]);
 
   useEffect(() => {
-    if (loadingConversations || !routeConversationId) return;
+    if (loadingConversations) return;
+    if (!routeConversationId) {
+      pendingLocalRouteId.current = null;
+      return;
+    }
+    if (pendingLocalRouteId.current && pendingLocalRouteId.current !== routeConversationId) {
+      return;
+    }
     const requestedConversation = conversations.find(
       (conversation) => conversation.id === routeConversationId,
     );
@@ -207,11 +219,14 @@ export function WorkspacePage() {
       return;
     }
     if (pendingLocalRouteId.current === routeConversationId) return;
-    navigate(`/chat/${encodeURIComponent(activeConversation.id)}`, {
-      replace: true,
-    });
+    const activePath =
+      activeConversation.messages.length > 0
+        ? `/chat/${encodeURIComponent(activeConversation.id)}`
+        : "/chat";
+    navigate(activePath, { replace: true });
   }, [
     activeConversation.id,
+    activeConversation.messages.length,
     activeConversationId,
     conversations,
     loadingConversations,
