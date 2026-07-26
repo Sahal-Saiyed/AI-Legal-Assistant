@@ -2,7 +2,7 @@ import { AlertCircle, LoaderCircle, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { useAuth } from "@/auth/auth-state";
+import { LOGOUT_SUCCESS_STORAGE_KEY, useAuth } from "@/auth/auth-state";
 import { AppHeader } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatWindow } from "@/components/chat/chat-window";
@@ -163,6 +163,11 @@ export function WorkspacePage() {
     }
   };
 
+  const handleLogout = () => {
+    sessionStorage.setItem(LOGOUT_SUCCESS_STORAGE_KEY, "true");
+    logout();
+  };
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -274,7 +279,7 @@ export function WorkspacePage() {
           onSelectConversation={selectConversation}
           onRenameConversation={renameConversation}
           onDeleteConversation={deleteConversation}
-          onLogout={logout}
+          onLogout={handleLogout}
         />
         <main
           id="workspace"

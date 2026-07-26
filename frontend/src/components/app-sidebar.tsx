@@ -166,6 +166,7 @@ function SidebarContent(props: AppSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTitle, setEditedTitle] = useState("");
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [logoutConfirmationOpen, setLogoutConfirmationOpen] = useState(false);
   const [conversationPendingDeletion, setConversationPendingDeletion] =
     useState<Conversation | null>(null);
   const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -396,12 +397,24 @@ function SidebarContent(props: AppSidebarProps) {
 
       <button
         type="button"
-        onClick={onLogout}
+        onClick={() => setLogoutConfirmationOpen(true)}
         className="mt-3 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-teal-100/50 transition hover:bg-white/[0.06] hover:text-white sm:mt-4 sm:py-2"
         title="Log out"
       >
         <LogOut className="size-4" /> Log out
       </button>
+      <ConfirmationDialog
+        open={logoutConfirmationOpen}
+        title="Log out of JuriGPT?"
+        description="You will need to sign in again to access your conversations."
+        confirmLabel="Log out"
+        intent="logout"
+        onConfirm={() => {
+          setLogoutConfirmationOpen(false);
+          onLogout();
+        }}
+        onCancel={() => setLogoutConfirmationOpen(false)}
+      />
       <ConfirmationDialog
         open={conversationPendingDeletion !== null}
         title="Delete this conversation?"

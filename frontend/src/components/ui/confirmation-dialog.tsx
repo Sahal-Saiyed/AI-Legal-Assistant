@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Trash2, X } from "lucide-react";
+import { AlertTriangle, LogOut, Trash2, X } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 
@@ -9,6 +9,7 @@ interface ConfirmationDialogProps {
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  intent?: "destructive" | "logout";
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -19,6 +20,7 @@ export function ConfirmationDialog({
   description,
   confirmLabel = "Delete",
   cancelLabel = "Cancel",
+  intent = "destructive",
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps) {
@@ -26,6 +28,7 @@ export function ConfirmationDialog({
   const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const isLogout = intent === "logout";
 
   useEffect(() => {
     if (!open) return;
@@ -100,8 +103,14 @@ export function ConfirmationDialog({
               >
                 <X className="size-4" />
               </button>
-              <span className="grid size-12 place-items-center rounded-2xl border border-red-100 bg-red-50 text-red-600 shadow-sm">
-                <AlertTriangle className="size-5" />
+              <span
+                className={
+                  isLogout
+                    ? "grid size-12 place-items-center rounded-2xl border border-teal-100 bg-teal-50 text-teal-700 shadow-sm"
+                    : "grid size-12 place-items-center rounded-2xl border border-red-100 bg-red-50 text-red-600 shadow-sm"
+                }
+              >
+                {isLogout ? <LogOut className="size-5" /> : <AlertTriangle className="size-5" />}
               </span>
               <h2 id={titleId} className="mt-5 pr-10 text-xl font-semibold text-slate-950">
                 {title}
@@ -122,9 +131,13 @@ export function ConfirmationDialog({
               <button
                 type="button"
                 onClick={onConfirm}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-red-600 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_-12px_rgba(220,38,38,0.8)] transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+                className={
+                  isLogout
+                    ? "inline-flex h-10 items-center justify-center gap-2 rounded-full bg-teal-700 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_-12px_rgba(15,118,110,0.8)] transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                    : "inline-flex h-10 items-center justify-center gap-2 rounded-full bg-red-600 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_-12px_rgba(220,38,38,0.8)] transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+                }
               >
-                <Trash2 className="size-4" />
+                {isLogout ? <LogOut className="size-4" /> : <Trash2 className="size-4" />}
                 {confirmLabel}
               </button>
             </div>

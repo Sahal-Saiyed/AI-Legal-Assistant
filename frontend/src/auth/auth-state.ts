@@ -2,6 +2,8 @@ import { createContext, useContext } from "react";
 
 import type { AuthUser } from "@/services/api";
 
+export const LOGOUT_SUCCESS_STORAGE_KEY = "jurigpt_logout_success";
+
 export interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;

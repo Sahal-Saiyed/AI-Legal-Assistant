@@ -3,8 +3,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState, type FormEvent } from "react";
 import { Navigate } from "react-router-dom";
 
-import { useAuth } from "@/auth/auth-state";
+import { LOGOUT_SUCCESS_STORAGE_KEY, useAuth } from "@/auth/auth-state";
 import { BrandLogo } from "@/components/brand-logo";
+import { SuccessToast } from "@/components/ui/success-toast";
 import { getAuthError } from "@/services/api";
 
 export function LoginPage() {
@@ -17,6 +18,14 @@ export function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [logoutSuccessVisible, setLogoutSuccessVisible] = useState(
+    () => sessionStorage.getItem(LOGOUT_SUCCESS_STORAGE_KEY) === "true",
+  );
+
+  useEffect(() => {
+    if (!logoutSuccessVisible) return;
+    sessionStorage.removeItem(LOGOUT_SUCCESS_STORAGE_KEY);
+  }, [logoutSuccessVisible]);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
@@ -49,6 +58,11 @@ export function LoginPage() {
 
   return (
     <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-[radial-gradient(circle_at_12%_10%,rgba(45,212,191,0.18),transparent_30%),linear-gradient(135deg,#dfeae7,#f6f7f4_55%,#d8e6e3)] px-4 py-8">
+      <SuccessToast
+        open={logoutSuccessVisible}
+        message="You have been logged out successfully."
+        onClose={() => setLogoutSuccessVisible(false)}
+      />
       <div className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-teal-300/15 blur-3xl" />
       <section
         className="relative min-h-[650px] w-full max-w-5xl overflow-hidden rounded-[34px] border border-white/80 bg-white shadow-[0_35px_100px_-38px_rgba(15,55,50,0.42)] md:min-h-[620px]"
