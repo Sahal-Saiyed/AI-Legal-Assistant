@@ -46,6 +46,7 @@ export function WorkspacePage() {
   const [persistenceError, setPersistenceError] = useState<string | null>(null);
   const persistenceQueues = useRef(new Map<string, Promise<void>>());
   const initialRouteConversationId = useRef(routeConversationId);
+  const pendingLocalRouteId = useRef<string | null>(null);
   const activeConversation =
     conversations.find((conversation) => conversation.id === activeConversationId) ??
     conversations[0];
@@ -94,10 +95,12 @@ export function WorkspacePage() {
     setSearchQuery("");
     const existingEmpty = conversations.find((conversation) => conversation.messages.length === 0);
     if (existingEmpty) {
+      pendingLocalRouteId.current = existingEmpty.id;
       setActiveConversationId(existingEmpty.id);
       navigate(`/chat/${encodeURIComponent(existingEmpty.id)}`);
     } else {
       const conversation = createConversation();
+      pendingLocalRouteId.current = conversation.id;
       setConversations((current) => [conversation, ...current]);
       setActiveConversationId(conversation.id);
       navigate(`/chat/${encodeURIComponent(conversation.id)}`);
@@ -108,6 +111,7 @@ export function WorkspacePage() {
   };
 
   const selectConversation = (conversationId: string) => {
+    pendingLocalRouteId.current = conversationId;
     setActiveConversationId(conversationId);
     navigate(`/chat/${encodeURIComponent(conversationId)}`);
     setSidebarOpen(false);
@@ -135,6 +139,7 @@ export function WorkspacePage() {
     const remaining = conversations.filter((conversation) => conversation.id !== conversationId);
     if (remaining.length === 0) {
       const replacement = createConversation();
+      pendingLocalRouteId.current = replacement.id;
       setActiveConversationId(replacement.id);
       setConversations([replacement]);
       navigate(`/chat/${encodeURIComponent(replacement.id)}`, { replace: true });
@@ -142,6 +147,7 @@ export function WorkspacePage() {
     }
     setConversations(remaining);
     if (conversationId === activeConversationId) {
+      pendingLocalRouteId.current = remaining[0].id;
       setActiveConversationId(remaining[0].id);
       navigate(`/chat/${encodeURIComponent(remaining[0].id)}`, { replace: true });
     }
@@ -154,11 +160,18 @@ export function WorkspacePage() {
     void getConversations()
       .then((savedConversations) => {
         if (cancelled) return;
-        const loaded = savedConversations.length > 0 ? savedConversations : [createConversation()];
         const requestedConversation = initialRouteConversationId.current
-          ? loaded.find((conversation) => conversation.id === initialRouteConversationId.current)
+          ? savedConversations.find(
+              (conversation) => conversation.id === initialRouteConversationId.current,
+            )
           : undefined;
-        const selectedConversation = requestedConversation ?? loaded[0];
+        const blankConversation = requestedConversation ? undefined : createConversation();
+        const loaded = blankConversation
+          ? [blankConversation, ...savedConversations]
+          : savedConversations;
+        const selectedConversation = requestedConversation ?? blankConversation;
+        if (!selectedConversation) return;
+        pendingLocalRouteId.current = selectedConversation.id;
         setConversations(loaded);
         setActiveConversationId(selectedConversation.id);
         if (initialRouteConversationId.current !== selectedConversation.id) {
@@ -185,11 +198,15 @@ export function WorkspacePage() {
       (conversation) => conversation.id === routeConversationId,
     );
     if (requestedConversation) {
+      if (pendingLocalRouteId.current === routeConversationId) {
+        pendingLocalRouteId.current = null;
+      }
       if (requestedConversation.id !== activeConversationId) {
         setActiveConversationId(requestedConversation.id);
       }
       return;
     }
+    if (pendingLocalRouteId.current === routeConversationId) return;
     navigate(`/chat/${encodeURIComponent(activeConversation.id)}`, {
       replace: true,
     });

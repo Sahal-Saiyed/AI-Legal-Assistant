@@ -1,7 +1,7 @@
 import { AlertCircle, ArrowRight, Eye, EyeOff, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState, type FormEvent } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import { useAuth } from "@/auth/auth-state";
 import { BrandLogo } from "@/components/brand-logo";
@@ -9,7 +9,6 @@ import { getAuthError } from "@/services/api";
 
 export function LoginPage() {
   const { user, login, register } = useAuth();
-  const location = useLocation();
   const [registerMode, setRegisterMode] = useState(false);
   const [desktop, setDesktop] = useState(() => window.matchMedia("(min-width: 768px)").matches);
   const [showPassword, setShowPassword] = useState(false);
@@ -26,16 +25,7 @@ export function LoginPage() {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  const requestedPath =
-    typeof location.state === "object" &&
-    location.state !== null &&
-    "from" in location.state &&
-    typeof location.state.from === "string" &&
-    location.state.from.startsWith("/chat")
-      ? location.state.from
-      : "/chat";
-
-  if (user) return <Navigate to={requestedPath} replace />;
+  if (user) return <Navigate to="/chat" replace />;
 
   const switchMode = () => {
     setRegisterMode((current) => !current);

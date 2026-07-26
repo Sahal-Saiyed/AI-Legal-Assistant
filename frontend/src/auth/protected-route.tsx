@@ -1,10 +1,9 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 import { useAuth } from "@/auth/auth-state";
 
 export function ProtectedRoute() {
   const { user, loading } = useAuth();
-  const location = useLocation();
   if (loading) {
     return (
       <div className="grid min-h-dvh place-items-center bg-[#eef4f2]" role="status">
@@ -13,5 +12,5 @@ export function ProtectedRoute() {
       </div>
     );
   }
-  return user ? <Outlet /> : <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  return user ? <Outlet /> : <Navigate to="/login" replace />;
 }
