@@ -1,18 +1,11 @@
-import {
-  AlertCircle,
-  ArrowUpRight,
-  BookOpenText,
-  BriefcaseBusiness,
-  RotateCcw,
-  ShieldCheck,
-  X,
-} from "lucide-react";
+import { AlertCircle, CircleHelp, RotateCcw, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 import { AssistantMessage } from "@/components/chat/assistant-message";
 import { BrandLogo } from "@/components/brand-logo";
 import { ChatInput } from "@/components/chat/chat-input";
+import { LegalScopeModal, LegalTopicExplorer } from "@/components/chat/legal-scope-guide";
 import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { UserMessage } from "@/components/chat/user-message";
 import type { ChatMessage } from "@/components/chat/types";
@@ -25,12 +18,6 @@ import {
   streamLegalQuestion,
   type ConversationContextMessage,
 } from "@/services/api";
-
-const suggestions = [
-  { icon: ShieldCheck, label: "What are my rights if an online seller refuses a refund?" },
-  { icon: BriefcaseBusiness, label: "Can an employer terminate me without notice?" },
-  { icon: BookOpenText, label: "How do I file an FIR?" },
-];
 
 const defaultDisclaimer =
   "This response is based solely on the supplied legal documents and is intended for informational purposes only. It is not legal advice.";
@@ -91,6 +78,7 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
   const [language, setLanguage] = useState<SupportedLanguage>("en");
   const [streamingText, setStreamingText] = useState("");
   const [error, setError] = useState<ChatError | null>(null);
+  const [scopeGuideOpen, setScopeGuideOpen] = useState(false);
   const activeRequest = useRef<AbortController | null>(null);
   const conversationEnd = useRef<HTMLDivElement | null>(null);
 
@@ -188,33 +176,17 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
             >
               <BrandLogo className="size-14 rounded-3xl bg-[#dff2ea] text-[#236f5f] shadow-sm" />
               <h2 className="mt-6 max-w-2xl text-balance text-3xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-4xl">
-                Welcome to JuriGPT
+                Legal guidance for everyday problems
               </h2>
-              <p className="mt-3 max-w-lg text-base font-medium leading-6 text-slate-600">
-                Your AI-powered Legal Assistant
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+                JuriGPT answers questions using trusted Indian legal resources in six supported
+                areas.
               </p>
-              <p className="mt-2 max-w-lg text-sm leading-6 text-slate-500">
-                Ask a legal question to begin.
+              <LegalTopicExplorer onAsk={(question) => void sendMessage(question)} />
+              <p className="mt-5 max-w-xl text-[11px] leading-5 text-slate-400">
+                JuriGPT currently answers questions within these six areas and provides legal
+                information, not legal advice.
               </p>
-              <div className="mt-8 grid w-full gap-2.5 sm:grid-cols-3 sm:gap-3">
-                {suggestions.map(({ icon: Icon, label }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => void sendMessage(label)}
-                    disabled={isLoading}
-                    className="group flex items-center gap-3 rounded-2xl border border-stone-200/80 bg-white p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-float active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 sm:min-h-32 sm:flex-col sm:items-start sm:justify-between sm:p-4"
-                  >
-                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#dff2ea] text-[#2d7b69] transition-colors group-hover:bg-[#cdeade] sm:size-10">
-                      <Icon className="size-5" strokeWidth={1.7} />
-                    </span>
-                    <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-slate-600 group-hover:text-slate-900 sm:mt-4 sm:flex-none sm:text-xs">
-                      {label}
-                    </span>
-                    <ArrowUpRight className="size-4 shrink-0 text-slate-300 transition-colors group-hover:text-teal-600 sm:hidden" />
-                  </button>
-                ))}
-              </div>
             </motion.div>
           ) : (
             <motion.div
@@ -306,6 +278,19 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
             </motion.div>
           ) : null}
         </AnimatePresence>
+        {messages.length > 0 ? (
+          <div className="mx-auto mb-2 flex max-w-3xl justify-end">
+            <button
+              type="button"
+              onClick={() => setScopeGuideOpen(true)}
+              disabled={isLoading}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-400 transition hover:bg-teal-50 hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:pointer-events-none disabled:opacity-50"
+            >
+              <CircleHelp className="size-3.5" />
+              What can I ask?
+            </button>
+          </div>
+        ) : null}
         <ChatInput
           onSend={(message) => void sendMessage(message)}
           disabled={isLoading}
@@ -313,6 +298,11 @@ export function ChatWindow({ messages, onMessagesChange }: ChatWindowProps) {
           onLanguageChange={setLanguage}
         />
       </footer>
+      <LegalScopeModal
+        open={scopeGuideOpen}
+        onClose={() => setScopeGuideOpen(false)}
+        onAsk={(question) => void sendMessage(question)}
+      />
     </Card>
   );
 }

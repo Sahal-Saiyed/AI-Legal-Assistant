@@ -1,7 +1,5 @@
 import {
-  BookOpenText,
   Check,
-  FileText,
   LogOut,
   MessageSquareText,
   MoreVertical,
@@ -17,34 +15,10 @@ import { createPortal } from "react-dom";
 
 import { BrandLogo } from "@/components/brand-logo";
 import type { Conversation } from "@/components/chat/types";
-import { LegalResourceModal, type LegalResource } from "@/components/legal-resource-modal";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { ThemedScrollArea } from "@/components/ui/themed-scroll-area";
 import { cn } from "@/lib/utils";
-
-const resources: LegalResource[] = [
-  {
-    title: "Consumer Protection Act",
-    category: "Consumer law",
-    description: "Legal protections and remedies available to consumers in India.",
-  },
-  {
-    title: "Industrial Relations Code",
-    category: "Employment law",
-    description: "Reference material concerning industrial relations and employment matters.",
-  },
-  {
-    title: "Cyber Crime Portal",
-    category: "Cyber law",
-    description: "Guidance related to reporting and understanding cybercrime matters.",
-  },
-  {
-    title: "Legal Awareness FAQ",
-    category: "Legal awareness",
-    description: "Plain-language answers to frequently asked legal questions.",
-  },
-];
 
 interface AppSidebarProps {
   conversations: Conversation[];
@@ -93,8 +67,7 @@ function ConversationMenu({
       if (!trigger) return;
       const rect = trigger.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      const top =
-        spaceBelow < MENU_HEIGHT + 12 ? rect.top - MENU_HEIGHT - 6 : rect.bottom + 6;
+      const top = spaceBelow < MENU_HEIGHT + 12 ? rect.top - MENU_HEIGHT - 6 : rect.bottom + 6;
       const left = Math.max(
         8,
         Math.min(rect.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8),
@@ -144,7 +117,12 @@ function ConversationMenu({
                 initial={{ opacity: 0, y: 4, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.14, ease: "easeOut" }}
-                style={{ position: "fixed", top: position.top, left: position.left, width: MENU_WIDTH }}
+                style={{
+                  position: "fixed",
+                  top: position.top,
+                  left: position.left,
+                  width: MENU_WIDTH,
+                }}
                 className="z-[120] overflow-hidden rounded-xl border border-white/10 bg-[#123230] p-1 shadow-[0_18px_45px_-18px_rgba(0,0,0,0.75)]"
               >
                 <button
@@ -188,7 +166,6 @@ function SidebarContent(props: AppSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTitle, setEditedTitle] = useState("");
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const [selectedResource, setSelectedResource] = useState<LegalResource | null>(null);
   const [conversationPendingDeletion, setConversationPendingDeletion] =
     useState<Conversation | null>(null);
   const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -294,7 +271,10 @@ function SidebarContent(props: AppSidebarProps) {
         ) : null}
       </label>
 
-      <section className="mt-4 flex min-h-0 flex-1 flex-col sm:mt-5" aria-labelledby="history-heading">
+      <section
+        className="mt-4 flex min-h-0 flex-1 flex-col sm:mt-5"
+        aria-labelledby="history-heading"
+      >
         <div className="flex items-center justify-between px-2">
           <h2
             id="history-heading"
@@ -414,41 +394,6 @@ function SidebarContent(props: AppSidebarProps) {
         </ThemedScrollArea>
       </section>
 
-      <section
-        className="relative mt-4 overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-white/[0.14] to-teal-300/[0.07] p-4 shadow-[0_20px_55px_-30px_rgba(45,212,191,0.75)] backdrop-blur-xl sm:mt-5 sm:p-5"
-        aria-labelledby="resources-heading"
-      >
-        <div className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-teal-300/15 blur-xl" />
-        <div className="pointer-events-none absolute -bottom-10 -left-6 size-20 rounded-full bg-white/[0.06]" />
-        <div className="relative flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-white/15 bg-white/10 text-teal-200 shadow-sm">
-            <BookOpenText className="size-4" strokeWidth={1.8} />
-          </span>
-          <h2 id="resources-heading" className="text-sm font-semibold">
-            Resource Documents
-          </h2>
-        </div>
-        <p className="relative mt-2 text-[10px] leading-4 text-teal-50/60 sm:mt-3">
-          Trusted legal references used by JuriGPT.
-        </p>
-        <div className="relative mt-2.5 space-y-0.5 rounded-2xl border border-white/[0.06] bg-slate-950/10 p-2 sm:mt-3 sm:space-y-1 sm:p-2.5">
-          {resources.map((resource) => (
-            <motion.button
-              type="button"
-              whileHover={{ x: 3 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setSelectedResource(resource)}
-              key={resource.title}
-              className="flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-2 text-left text-[11px] leading-4 text-teal-50/80 transition hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 sm:py-1.5 sm:text-[10px]"
-              aria-label={`Open ${resource.title}`}
-            >
-              <FileText className="size-3.5 shrink-0 sm:size-3" />
-              <span className="truncate">{resource.title}</span>
-            </motion.button>
-          ))}
-        </div>
-      </section>
-
       <button
         type="button"
         onClick={onLogout}
@@ -457,7 +402,6 @@ function SidebarContent(props: AppSidebarProps) {
       >
         <LogOut className="size-4" /> Log out
       </button>
-      <LegalResourceModal resource={selectedResource} onClose={() => setSelectedResource(null)} />
       <ConfirmationDialog
         open={conversationPendingDeletion !== null}
         title="Delete this conversation?"
